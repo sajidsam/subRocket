@@ -67,7 +67,7 @@ void main() {
       expect(find.byType(TacticalCompassCard), findsAtLeastNWidgets(1));
       expect(find.text('JCA'), findsOneWidget);
       expect(find.text('4K . 19.67FPS'), findsOneWidget);
-      expect(find.text('DJI Mavic pro'), findsOneWidget);
+      expect(find.text('Battery'), findsOneWidget);
       expect(find.text('83°'), findsAtLeastNWidgets(1));
     });
 
@@ -104,10 +104,10 @@ void main() {
       await tester.pumpWidget(createTestableWidget(const DroneStatusCard()));
       await tester.pump();
 
-      expect(find.text('DJI Mavic pro'), findsOneWidget);
-      expect(find.text('Battery status'), findsOneWidget);
+      expect(find.text('Battery'), findsOneWidget);
       expect(find.text('Altitude limited'), findsOneWidget);
-      expect(find.text('HDR+'), findsOneWidget);
+      expect(find.text('Resolution px'), findsOneWidget);
+      expect(find.text('HDR'), findsOneWidget);
     });
 
     testWidgets('TacticalCompassCard displays heading degree and cardinal direction', (WidgetTester tester) async {
@@ -162,8 +162,8 @@ void main() {
       await tester.pumpWidget(createTestableWidget(const DashboardScreen()));
       await tester.pump();
 
-      // Initially camera is top (shows HDR) and mini box has swap icon
-      expect(find.text('HDR'), findsOneWidget);
+      // Initially camera is top (shows 4K . 19.67FPS) and mini box has swap icon
+      expect(find.text('4K . 19.67FPS'), findsOneWidget);
       expect(find.byIcon(Icons.sync), findsOneWidget);
 
       // Tap swap icon button
@@ -178,8 +178,8 @@ void main() {
       await tester.tap(find.text('CAMERA VIEW'));
       await tester.pump();
 
-      // Swapped back: HDR is visible again
-      expect(find.text('HDR'), findsOneWidget);
+      // Swapped back: 4K . 19.67FPS is visible again
+      expect(find.text('4K . 19.67FPS'), findsOneWidget);
     });
   });
 }

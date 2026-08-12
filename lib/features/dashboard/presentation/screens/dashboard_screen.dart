@@ -238,15 +238,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           flex: 34,
           child: Column(
             children: const [
-              // Zone C1: Drone Status Card
+              // Zone C1: Drone Status Card (aligned exactly with Zone A Camera Feed height)
               Expanded(
-                flex: 50,
+                flex: 58,
                 child: DroneStatusCard(),
               ),
               SizedBox(height: 8),
-              // Zone C2: Tactical Compass Card
+              // Zone C2: Tactical Compass Card (aligned exactly with Zone B Flight Deck height)
               Expanded(
-                flex: 50,
+                flex: 42,
                 child: TacticalCompassCard(),
               ),
             ],
