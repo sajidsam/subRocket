@@ -1,13 +1,22 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import 'package:provider/provider.dart';
 import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
 import 'tactical_compass_card.dart';
 
 class CameraViewfinderCard extends StatefulWidget {
-  const CameraViewfinderCard({super.key});
+  final bool isSwapped;
+  final VoidCallback? onToggleSwap;
+
+  const CameraViewfinderCard({
+    super.key,
+    this.isSwapped = false,
+    this.onToggleSwap,
+  });
 
   @override
   State<CameraViewfinderCard> createState() => _CameraViewfinderCardState();
@@ -23,6 +32,7 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
   String _levelUnit = 'KT';
 
   late AnimationController _animController;
+  final MapController _primaryMapController = MapController();
 
   @override
   void initState() {
@@ -57,6 +67,18 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
   @override
   Widget build(BuildContext context) {
     final vehicle = context.watch<VehicleState>();
+    final LatLng currentPos = vehicle.currentLocation ?? vehicle.homeLocation;
+
+    if (widget.isSwapped) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          try {
+            _primaryMapController.move(currentPos, _primaryMapController.camera.zoom);
+          } catch (_) {}
+        }
+      });
+      return _buildPrimaryMapView(vehicle, currentPos);
+    }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -71,12 +93,12 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
           children: [
             // 1. Realistic Mountain Landscape Camera Feed Background
             CustomPaint(
-              painter: _MountainLandscapePainter(animation: _animController),
+              painter: MountainLandscapePainter(animation: _animController),
             ),
 
             // 2. Rule of Thirds Grid Overlay
             CustomPaint(
-              painter: _ViewfinderGridPainter(),
+              painter: ViewfinderGridPainter(),
             ),
 
             // 3. Center Artificial Horizon / Reticle
@@ -85,7 +107,7 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
                 angle: vehicle.roll * (pi / 180.0),
                 child: Transform.translate(
                   offset: Offset(0, (vehicle.pitch * 1.5).clamp(-60.0, 60.0)),
-                  child: const _ArtificialHorizonReticle(),
+                  child: const ArtificialHorizonReticle(),
                 ),
               ),
             ),
@@ -350,6 +372,190 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
     );
   }
 
+  Widget _buildPrimaryMapView(VehicleState vehicle, LatLng currentPos) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: GcsColors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: GcsColors.border, width: 1),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 1. Full OpenStreetMap View (No Dark Shade)
+            FlutterMap(
+              mapController: _primaryMapController,
+              options: MapOptions(
+                initialCenter: currentPos,
+                initialZoom: 15.0,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.rocketcontroller.gcs',
+                ),
+                MarkerLayer(
+                  markers: [
+                    // Home Marker
+                    Marker(
+                      point: vehicle.homeLocation,
+                      width: 32,
+                      height: 32,
+                      child: const Icon(
+                        Icons.home,
+                        color: GcsColors.goldAccent,
+                        size: 28,
+                      ),
+                    ),
+                    // Real-Time Drone Marker
+                    Marker(
+                      point: currentPos,
+                      width: 44,
+                      height: 44,
+                      child: Transform.rotate(
+                        angle: vehicle.yaw * (pi / 180.0),
+                        child: const Icon(
+                          Icons.navigation,
+                          color: GcsColors.cyanAccent,
+                          size: 38,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            // 2. Top-Left HUD Telemetry Overlay on Map
+            Positioned(
+              top: 14,
+              left: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.75),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white24, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: GcsColors.channelGreen,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          vehicle.gpsFix.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'SATS: ${vehicle.satellitesVisible}',
+                          style: const TextStyle(
+                            color: GcsColors.cyanAccent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${currentPos.latitude.toStringAsFixed(6)}° N, ${currentPos.longitude.toStringAsFixed(6)}° E',
+                      style: const TextStyle(
+                        color: GcsColors.goldAccent,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // 3. Top-Right Swap / Toggle Return Button
+            Positioned(
+              top: 14,
+              right: 16,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: widget.onToggleSwap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: GcsColors.goldAccent, width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: GcsColors.goldAccent.withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.sync, color: GcsColors.goldAccent, size: 14),
+                        SizedBox(width: 6),
+                        Text(
+                          'CAMERA VIEW',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 4. Bottom-Right: Tactical Compass Overlay
+            const Positioned(
+              bottom: 12,
+              right: 14,
+              width: 145,
+              height: 145,
+              child: TacticalCompassCard(isOverlay: true),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildChannelDot(Color color, String label) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -377,8 +583,8 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
 }
 
 // Center Artificial Horizon Reticle (Clean Aircraft Symbol)
-class _ArtificialHorizonReticle extends StatelessWidget {
-  const _ArtificialHorizonReticle();
+class ArtificialHorizonReticle extends StatelessWidget {
+  const ArtificialHorizonReticle({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -429,7 +635,7 @@ class _ReticlePainter extends CustomPainter {
 }
 
 // Viewfinder Grid Overlay (Rule of Thirds Dotted Lines)
-class _ViewfinderGridPainter extends CustomPainter {
+class ViewfinderGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -483,10 +689,10 @@ class _HistogramPainter extends CustomPainter {
 }
 
 // Alpine Mountain View Background Painter
-class _MountainLandscapePainter extends CustomPainter {
+class MountainLandscapePainter extends CustomPainter {
   final Animation<double> animation;
 
-  _MountainLandscapePainter({required this.animation}) : super(repaint: animation);
+  MountainLandscapePainter({required this.animation}) : super(repaint: animation);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -582,5 +788,5 @@ class _MountainLandscapePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _MountainLandscapePainter oldDelegate) => false;
+  bool shouldRepaint(covariant MountainLandscapePainter oldDelegate) => false;
 }

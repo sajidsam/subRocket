@@ -38,6 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final FocusNode _focusNode = FocusNode();
   final MapController _targetMapController = MapController();
   int _selectedNavIndex = 0;
+  bool _isMapPrimary = false;
 
   @override
   void dispose() {
@@ -208,17 +209,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Expanded(
           flex: 66,
           child: Column(
-            children: const [
-              // Zone A: Camera Viewfinder Card
+            children: [
+              // Zone A: Camera Viewfinder Card / Swappable Main Screen
               Expanded(
                 flex: 58,
-                child: CameraViewfinderCard(),
+                child: CameraViewfinderCard(
+                  isSwapped: _isMapPrimary,
+                  onToggleSwap: () => setState(() => _isMapPrimary = !_isMapPrimary),
+                ),
               ),
-              SizedBox(height: 8),
-              // Zone B: Flight & Camera Deck Card
+              const SizedBox(height: 8),
+              // Zone B: Flight & Camera Deck Card (with Mini Map / Mini Camera View)
               Expanded(
                 flex: 42,
-                child: FlightCameraDeckCard(),
+                child: FlightCameraDeckCard(
+                  isSwapped: _isMapPrimary,
+                  onToggleSwap: () => setState(() => _isMapPrimary = !_isMapPrimary),
+                ),
               ),
             ],
           ),

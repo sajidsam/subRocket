@@ -1,20 +1,28 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import 'package:provider/provider.dart';
 import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
 import '../../../../core/services/mavlink_service.dart';
+import 'camera_viewfinder_card.dart';
 
 class FlightCameraDeckCard extends StatefulWidget {
-  const FlightCameraDeckCard({super.key});
+  final bool isSwapped;
+  final VoidCallback? onToggleSwap;
+
+  const FlightCameraDeckCard({
+    super.key,
+    this.isSwapped = false,
+    this.onToggleSwap,
+  });
 
   @override
   State<FlightCameraDeckCard> createState() => _FlightCameraDeckCardState();
 }
 
-class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> {
+class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with SingleTickerProviderStateMixin {
   bool _isVideoMode = true;
   String _selectedFrameLine = '1280 : 720';
   bool _awbActive = true;
@@ -33,10 +41,39 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> {
     '640 : 360',
   ];
 
+  late AnimationController _animController;
+  final MapController _miniMapController = MapController();
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final vehicle = context.watch<VehicleState>();
     final mavlink = context.watch<MavlinkService>();
+    final LatLng currentPos = vehicle.currentLocation ?? vehicle.homeLocation;
+
+    if (!widget.isSwapped) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          try {
+            _miniMapController.move(currentPos, _miniMapController.camera.zoom);
+          } catch (_) {}
+        }
+      });
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -48,9 +85,9 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Section 1: Video/Photo Switcher & Tactical Mini Map
+          // Section 1: Video/Photo Switcher & Tactical Mini Map / Mini Camera View
           SizedBox(
-            width: 145,
+            width: 195,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -133,7 +170,7 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> {
                 ),
                 const SizedBox(height: 8),
 
-                // Tactical Mini Map Box
+                // Tactical Mini Box: Live Map OR Mini Camera Feed (Swappable)
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
@@ -143,82 +180,9 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> {
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: GcsColors.border, width: 1),
                       ),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          FlutterMap(
-                            options: MapOptions(
-                              initialCenter: vehicle.currentLocation ?? const LatLng(40.7128, -74.0060),
-                              initialZoom: 13.0,
-                              interactionOptions: const InteractionOptions(
-                                flags: InteractiveFlag.none,
-                              ),
-                            ),
-                            children: [
-                              TileLayer(
-                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                userAgentPackageName: 'com.rocketcontroller.gcs',
-                              ),
-                              // Dark Overlay for Tactical Radar Style
-                              Container(
-                                color: const Color(0xFF0A0F14).withValues(alpha: 0.78),
-                              ),
-                              // Marker Layer
-                              MarkerLayer(
-                                markers: [
-                                  Marker(
-                                    point: vehicle.currentLocation ?? const LatLng(40.7128, -74.0060),
-                                    width: 20,
-                                    height: 20,
-                                    child: Transform.rotate(
-                                      angle: vehicle.yaw * (pi / 180.0),
-                                      child: const Icon(
-                                        Icons.navigation,
-                                        color: GcsColors.cyanAccent,
-                                        size: 16,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          // Subtle Map Grid & Label Overlay
-                          Positioned(
-                            top: 6,
-                            left: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.6),
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                              child: const Text(
-                                'New York',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 4,
-                            right: 6,
-                            child: Text(
-                              'BROOKLYN',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.35),
-                                fontSize: 7,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: widget.isSwapped
+                          ? _buildMiniCameraFeed(vehicle)
+                          : _buildMiniMapFeed(vehicle, currentPos),
                     ),
                   ),
                 ),
@@ -610,4 +574,224 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> {
       ),
     );
   }
+
+  Widget _buildMiniMapFeed(VehicleState vehicle, LatLng currentPos) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // 1. Clean Mini OpenStreetMap (NO dark shade)
+        FlutterMap(
+          mapController: _miniMapController,
+          options: MapOptions(
+            initialCenter: currentPos,
+            initialZoom: 13.0,
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.none,
+            ),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.rocketcontroller.gcs',
+            ),
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: currentPos,
+                  width: 24,
+                  height: 24,
+                  child: Transform.rotate(
+                    angle: vehicle.yaw * (pi / 180.0),
+                    child: const Icon(
+                      Icons.navigation,
+                      color: GcsColors.cyanAccent,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        // 2. Real-Time Coordinates Badge (Top-Left)
+        Positioned(
+          top: 6,
+          left: 6,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.75),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.white24, width: 0.8),
+            ),
+            child: Text(
+              '${currentPos.latitude.toStringAsFixed(4)}, ${currentPos.longitude.toStringAsFixed(4)}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ),
+        ),
+
+        // 3. Screen Toggle / Swap Button (Bottom-Right)
+        Positioned(
+          bottom: 5,
+          right: 5,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(6),
+              onTap: widget.onToggleSwap,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: GcsColors.goldAccent, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: GcsColors.goldAccent.withValues(alpha: 0.35),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.sync,
+                  color: GcsColors.goldAccent,
+                  size: 14,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniCameraFeed(VehicleState vehicle) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // 1. Live Mountain Landscape Background
+        CustomPaint(
+          painter: MountainLandscapePainter(animation: _animController),
+        ),
+
+        // 2. Mini Horizon Reticle
+        Center(
+          child: Transform.rotate(
+            angle: vehicle.roll * (pi / 180.0),
+            child: const _MiniHorizonReticle(),
+          ),
+        ),
+
+        // 3. CAM LIVE Badge (Top-Left)
+        Positioned(
+          top: 6,
+          left: 6,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.75),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: GcsColors.channelRed.withValues(alpha: 0.8), width: 0.8),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.circle, color: GcsColors.channelRed, size: 5),
+                SizedBox(width: 3),
+                Text(
+                  'CAM LIVE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // 4. Screen Toggle / Swap Button (Bottom-Right)
+        Positioned(
+          bottom: 5,
+          right: 5,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(6),
+              onTap: widget.onToggleSwap,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: GcsColors.goldAccent, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: GcsColors.goldAccent.withValues(alpha: 0.35),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.sync,
+                  color: GcsColors.goldAccent,
+                  size: 14,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniHorizonReticle extends StatelessWidget {
+  const _MiniHorizonReticle();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(60, 20),
+      painter: _MiniReticlePainter(),
+    );
+  }
+}
+
+class _MiniReticlePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.9)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+
+    final center = Offset(size.width / 2, size.height / 2);
+
+    canvas.drawLine(
+      Offset(center.dx - 20, center.dy),
+      Offset(center.dx - 5, center.dy),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(center.dx + 5, center.dy),
+      Offset(center.dx + 20, center.dy),
+      paint,
+    );
+    canvas.drawCircle(center, 3.5, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

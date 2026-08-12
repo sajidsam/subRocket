@@ -110,11 +110,12 @@ void main() {
       expect(find.text('HDR+'), findsOneWidget);
     });
 
-    testWidgets('TacticalCompassCard formats coordinates correctly', (WidgetTester tester) async {
+    testWidgets('TacticalCompassCard displays heading degree and cardinal direction', (WidgetTester tester) async {
       await tester.pumpWidget(createTestableWidget(const TacticalCompassCard()));
       await tester.pump();
 
       expect(find.text('83°'), findsOneWidget);
+      expect(find.text('E'), findsOneWidget);
       expect(find.byType(TacticalCompassCard), findsOneWidget);
     });
 
@@ -148,6 +149,37 @@ void main() {
 
       expect(find.byType(JcaSidebar), findsOneWidget);
       expect(find.byType(CameraViewfinderCard), findsOneWidget);
+    });
+
+    testWidgets('Tapping swap icon toggles map to primary view and camera to mini box', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestableWidget(const DashboardScreen()));
+      await tester.pump();
+
+      // Initially camera is top (shows HDR) and mini box has swap icon
+      expect(find.text('HDR'), findsOneWidget);
+      expect(find.byIcon(Icons.sync), findsOneWidget);
+
+      // Tap swap icon button
+      await tester.tap(find.byIcon(Icons.sync).first);
+      await tester.pump();
+
+      // Now map is top (shows CAMERA VIEW return button) and mini box shows CAM LIVE
+      expect(find.text('CAMERA VIEW'), findsOneWidget);
+      expect(find.text('CAM LIVE'), findsOneWidget);
+
+      // Tap CAMERA VIEW return button to toggle back
+      await tester.tap(find.text('CAMERA VIEW'));
+      await tester.pump();
+
+      // Swapped back: HDR is visible again
+      expect(find.text('HDR'), findsOneWidget);
     });
   });
 }

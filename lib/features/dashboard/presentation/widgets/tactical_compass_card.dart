@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart' hide Path;
 import 'package:provider/provider.dart';
 import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
@@ -13,27 +12,24 @@ class TacticalCompassCard extends StatelessWidget {
     this.isOverlay = false,
   });
 
-  String _formatCoordinate(LatLng? pos) {
-    if (pos == null) {
-      return "50°26'3\" N  30°28'50\" E";
-    }
-    final latDeg = pos.latitude.abs().floor();
-    final latMin = ((pos.latitude.abs() - latDeg) * 60).floor();
-    final latSec = ((((pos.latitude.abs() - latDeg) * 60) - latMin) * 60).toStringAsFixed(0);
-    final latHem = pos.latitude >= 0 ? 'N' : 'S';
-
-    final lngDeg = pos.longitude.abs().floor();
-    final lngMin = ((pos.longitude.abs() - lngDeg) * 60).floor();
-    final lngSec = ((((pos.longitude.abs() - lngDeg) * 60) - lngMin) * 60).toStringAsFixed(0);
-    final lngHem = pos.longitude >= 0 ? 'E' : 'W';
-
-    return "$latDeg°$latMin'$latSec\" $latHem  $lngDeg°$lngMin'$lngSec\" $lngHem";
+  String _getHeadingDirection(double yaw) {
+    final normalized = (yaw % 360 + 360) % 360;
+    if (normalized >= 337.5 || normalized < 22.5) return 'N';
+    if (normalized >= 22.5 && normalized < 67.5) return 'NE';
+    if (normalized >= 67.5 && normalized < 112.5) return 'E';
+    if (normalized >= 112.5 && normalized < 157.5) return 'SE';
+    if (normalized >= 157.5 && normalized < 202.5) return 'S';
+    if (normalized >= 202.5 && normalized < 247.5) return 'SW';
+    if (normalized >= 247.5 && normalized < 292.5) return 'W';
+    return 'NW';
   }
 
   @override
   Widget build(BuildContext context) {
     final vehicle = context.watch<VehicleState>();
-    final heading = vehicle.yaw > 0 ? vehicle.yaw.toInt() : 83;
+    final double currentYaw = vehicle.yaw > 0 ? vehicle.yaw : 83.0;
+    final heading = currentYaw.toInt();
+    final headingDirection = _getHeadingDirection(currentYaw);
 
     return Container(
       decoration: BoxDecoration(
@@ -53,51 +49,17 @@ class TacticalCompassCard extends StatelessWidget {
               ]
             : null,
       ),
-      padding: EdgeInsets.symmetric(
-        horizontal: isOverlay ? 8 : 14,
-        vertical: isOverlay ? 6 : 10,
-      ),
-      child: Column(
+      padding: EdgeInsets.all(isOverlay ? 6 : 8),
+      child: Stack(
         children: [
-          // Top Heading Blue Pill Badge (83°)
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isOverlay ? 8 : 12,
-              vertical: isOverlay ? 2 : 3,
-            ),
-            decoration: BoxDecoration(
-              color: GcsColors.aviationBlue,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: GcsColors.aviationBlue.withValues(alpha: 0.35),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Text(
-              '$heading°',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: isOverlay ? 9.5 : 11,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'monospace',
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-
-          SizedBox(height: isOverlay ? 3 : 6),
-
-          // Tactical Compass Rose Custom Painter
-          Expanded(
+          // 1. Centered Expanded Tactical Compass Rose Dial (Maximized Radius)
+          Positioned.fill(
             child: Center(
               child: AspectRatio(
                 aspectRatio: 1.0,
                 child: CustomPaint(
                   painter: _CompassDialPainter(
-                    yaw: vehicle.yaw > 0 ? vehicle.yaw : 83.0,
+                    yaw: currentYaw,
                     isCompact: isOverlay,
                   ),
                 ),
@@ -105,17 +67,73 @@ class TacticalCompassCard extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: isOverlay ? 2 : 4),
+          // 2. Top-Left Corner Heading Degrees Badge (e.g. 83°)
+          Positioned(
+            top: 2,
+            left: 2,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isOverlay ? 6 : 8,
+                vertical: isOverlay ? 2 : 3,
+              ),
+              decoration: BoxDecoration(
+                color: GcsColors.aviationBlue,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: GcsColors.aviationBlue.withValues(alpha: 0.35),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1.5),
+                  ),
+                ],
+              ),
+              child: Text(
+                '$heading°',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isOverlay ? 9.5 : 11,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'monospace',
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
 
-          // Bottom GPS Coordinates Readout
-          Text(
-            _formatCoordinate(vehicle.currentLocation),
-            style: TextStyle(
-              color: isOverlay ? Colors.white70 : GcsColors.textSecondary,
-              fontSize: isOverlay ? 7.5 : 9,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'monospace',
-              letterSpacing: isOverlay ? 0.4 : 0.6,
+          // 3. Top-Right Corner Cardinal Heading Direction Badge (e.g. E, NE, W, S, SW...)
+          Positioned(
+            top: 2,
+            right: 2,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isOverlay ? 6 : 8,
+                vertical: isOverlay ? 2 : 3,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: GcsColors.goldAccent.withValues(alpha: 0.8),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1.5),
+                  ),
+                ],
+              ),
+              child: Text(
+                headingDirection,
+                style: TextStyle(
+                  color: GcsColors.goldAccent,
+                  fontSize: isOverlay ? 9.5 : 11,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'monospace',
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
           ),
         ],
@@ -136,7 +154,7 @@ class _CompassDialPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = min(size.width, size.height) / 2 - 3;
+    final radius = min(size.width, size.height) / 2 - 2;
 
     final tickPaint = Paint()
       ..color = Colors.white38
