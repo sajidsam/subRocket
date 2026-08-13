@@ -10,11 +10,13 @@ import 'tactical_compass_card.dart';
 
 class CameraViewfinderCard extends StatefulWidget {
   final bool isSwapped;
+  final bool isDispActive;
   final VoidCallback? onToggleSwap;
 
   const CameraViewfinderCard({
     super.key,
     this.isSwapped = false,
+    this.isDispActive = true,
     this.onToggleSwap,
   });
 
@@ -96,12 +98,7 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
               painter: MountainLandscapePainter(animation: _animController),
             ),
 
-            // 2. Rule of Thirds Grid Overlay
-            CustomPaint(
-              painter: ViewfinderGridPainter(),
-            ),
-
-            // 3. Center Artificial Horizon / Reticle
+            // 2. Center Artificial Horizon / Reticle (Navigation stays always visible)
             Center(
               child: Transform.rotate(
                 angle: vehicle.roll * (pi / 180.0),
@@ -112,260 +109,268 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
               ),
             ),
 
-            // 4. Top-Left HUD Telemetry Overlay
-            Positioned(
-              top: 14,
-              left: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // HDR Pill Button
-                  InkWell(
-                    borderRadius: BorderRadius.circular(6),
-                    onTap: () => setState(() => _isHdrActive = !_isHdrActive),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _isHdrActive
-                            ? GcsColors.cardSurfaceLight.withValues(alpha: 0.85)
-                            : Colors.black.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: _isHdrActive ? Colors.white54 : GcsColors.border,
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        'HDR',
-                        style: TextStyle(
-                          color: _isHdrActive ? Colors.white : GcsColors.textMuted,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // 4K . 19.67FPS Text in Warm Gold
-                  const Text(
-                    '4K . 19.67FPS',
-                    style: TextStyle(
-                      color: GcsColors.goldAccent,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // LEVEL Slider & KT Pill
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'LEVEL',
-                            style: TextStyle(
-                              color: GcsColors.textMuted,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          SizedBox(
-                            width: 60,
-                            height: 12,
-                            child: SliderTheme(
-                              data: SliderThemeData(
-                                trackHeight: 1.5,
-                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 3),
-                                overlayShape: const RoundSliderOverlayShape(overlayRadius: 6),
-                                activeTrackColor: Colors.white70,
-                                inactiveTrackColor: Colors.white24,
-                                thumbColor: Colors.white,
-                              ),
-                              child: Slider(
-                                value: _levelValue,
-                                min: 0.0,
-                                max: 1.0,
-                                onChanged: (val) => setState(() => _levelValue = val),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-
-                  // KT Pill
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.white24, width: 0.8),
-                    ),
-                    child: Text(
-                      _levelUnit,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Multi-Channel RGBY Dots Matrix
-                  Row(
-                    children: [
-                      _buildChannelDot(GcsColors.channelRed, 'R'),
-                      const SizedBox(width: 8),
-                      _buildChannelDot(GcsColors.channelGreen, 'G'),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      _buildChannelDot(GcsColors.channelBlue, 'B'),
-                      const SizedBox(width: 8),
-                      _buildChannelDot(GcsColors.channelYellow, 'Y'),
-                    ],
-                  ),
-                ],
+            // Non-nav HUD Overlays (Toggled on/off with DISP button)
+            if (widget.isDispActive) ...[
+              // Rule of Thirds Grid Overlay
+              CustomPaint(
+                painter: ViewfinderGridPainter(),
               ),
-            ),
 
-            // 5. Bottom-Left Histogram Box [H2.85]
-            Positioned(
-              bottom: 14,
-              left: 16,
-              child: Container(
-                width: 76,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.white24, width: 1),
-                ),
+              // Top-Left HUD Telemetry Overlay
+              Positioned(
+                top: 14,
+                left: 16,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    // HDR Pill Button
+                    InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => setState(() => _isHdrActive = !_isHdrActive),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _isHdrActive
+                              ? GcsColors.cardSurfaceLight.withValues(alpha: 0.85)
+                              : Colors.black.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: _isHdrActive ? Colors.white54 : GcsColors.border,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          'HDR',
+                          style: TextStyle(
+                            color: _isHdrActive ? Colors.white : GcsColors.textMuted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 4K . 19.67FPS Text in Warm Gold
                     const Text(
-                      'H2.85',
+                      '4K . 19.67FPS',
                       style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 9,
+                        color: GcsColors.goldAccent,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
                         fontFamily: 'monospace',
                       ),
                     ),
+                    const SizedBox(height: 8),
+
+                    // LEVEL Slider & KT Pill
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'LEVEL',
+                              style: TextStyle(
+                                color: GcsColors.textMuted,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            SizedBox(
+                              width: 60,
+                              height: 12,
+                              child: SliderTheme(
+                                data: SliderThemeData(
+                                  trackHeight: 1.5,
+                                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 3),
+                                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 6),
+                                  activeTrackColor: Colors.white70,
+                                  inactiveTrackColor: Colors.white24,
+                                  thumbColor: Colors.white,
+                                ),
+                                child: Slider(
+                                  value: _levelValue,
+                                  min: 0.0,
+                                  max: 1.0,
+                                  onChanged: (val) => setState(() => _levelValue = val),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 2),
-                    SizedBox(
-                      width: 68,
-                      height: 26,
-                      child: CustomPaint(
-                        painter: _HistogramPainter(),
+
+                    // KT Pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.white24, width: 0.8),
+                      ),
+                      child: Text(
+                        _levelUnit,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Multi-Channel RGBY Dots Matrix
+                    Row(
+                      children: [
+                        _buildChannelDot(GcsColors.channelRed, 'R'),
+                        const SizedBox(width: 8),
+                        _buildChannelDot(GcsColors.channelGreen, 'G'),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        _buildChannelDot(GcsColors.channelBlue, 'B'),
+                        const SizedBox(width: 8),
+                        _buildChannelDot(GcsColors.channelYellow, 'Y'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Bottom-Left Histogram Box [H2.85]
+              Positioned(
+                bottom: 14,
+                left: 16,
+                child: Container(
+                  width: 76,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.white24, width: 1),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'H2.85',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      SizedBox(
+                        width: 68,
+                        height: 26,
+                        child: CustomPaint(
+                          painter: _HistogramPainter(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Top-Right Controls (Pause & Record Timer)
+              Positioned(
+                top: 14,
+                right: 16,
+                child: Row(
+                  children: [
+                    // Pause / Play Button
+                    InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => setState(() => _isPaused = !_isPaused),
+                      child: Container(
+                        width: 32,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: GcsColors.borderLight, width: 1),
+                        ),
+                        child: Icon(
+                          _isPaused ? Icons.play_arrow : Icons.pause,
+                          color: Colors.white70,
+                          size: 15,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Record Timer Pill
+                    InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => setState(() => _isRecording = !_isRecording),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.75),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: GcsColors.borderLight, width: 1),
+                        ),
+                        child: Row(
+                          children: [
+                            AnimatedBuilder(
+                              animation: _animController,
+                              builder: (context, child) {
+                                return Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    color: _isRecording
+                                        ? GcsColors.goldAccent.withValues(
+                                            alpha: _isPaused ? 0.3 : (0.5 + 0.5 * sin(_animController.value * 2 * pi).abs()),
+                                          )
+                                        : GcsColors.textMuted,
+                                    shape: BoxShape.circle,
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _formatTimer(_recordSeconds),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'monospace',
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
 
-            // 6. Top-Right Controls (Pause & Record Timer)
-            Positioned(
-              top: 14,
-              right: 16,
-              child: Row(
-                children: [
-                  // Pause / Play Button
-                  InkWell(
-                    borderRadius: BorderRadius.circular(6),
-                    onTap: () => setState(() => _isPaused = !_isPaused),
-                    child: Container(
-                      width: 32,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: GcsColors.borderLight, width: 1),
-                      ),
-                      child: Icon(
-                        _isPaused ? Icons.play_arrow : Icons.pause,
-                        color: Colors.white70,
-                        size: 15,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Record Timer Pill
-                  InkWell(
-                    borderRadius: BorderRadius.circular(6),
-                    onTap: () => setState(() => _isRecording = !_isRecording),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: GcsColors.borderLight, width: 1),
-                      ),
-                      child: Row(
-                        children: [
-                          AnimatedBuilder(
-                            animation: _animController,
-                            builder: (context, child) {
-                              return Container(
-                                width: 7,
-                                height: 7,
-                                decoration: BoxDecoration(
-                                  color: _isRecording
-                                      ? GcsColors.goldAccent.withValues(
-                                          alpha: _isPaused ? 0.3 : (0.5 + 0.5 * sin(_animController.value * 2 * pi).abs()),
-                                        )
-                                      : GcsColors.textMuted,
-                                  shape: BoxShape.circle,
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            _formatTimer(_recordSeconds),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'monospace',
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              // Bottom-Right: Tactical Compass Overlay on Camera Feed
+              const Positioned(
+                bottom: 12,
+                right: 14,
+                width: 145,
+                height: 145,
+                child: TacticalCompassCard(isOverlay: true),
               ),
-            ),
-
-            // 7. Bottom-Right (3rd Column, 3rd Row): Tactical Compass Overlay on Camera Feed
-            const Positioned(
-              bottom: 12,
-              right: 14,
-              width: 145,
-              height: 145,
-              child: TacticalCompassCard(isOverlay: true),
-            ),
+            ],
           ],
         ),
       ),

@@ -65,7 +65,7 @@ void main() {
       expect(find.byType(FlightCameraDeckCard), findsOneWidget);
       expect(find.byType(DroneStatusCard), findsOneWidget);
       expect(find.byType(TacticalCompassCard), findsAtLeastNWidgets(1));
-      expect(find.text('JCA'), findsOneWidget);
+      expect(find.text('SAFAR'), findsOneWidget);
       expect(find.text('4K . 19.67FPS'), findsOneWidget);
       expect(find.text('Battery'), findsOneWidget);
       expect(find.text('83°'), findsAtLeastNWidgets(1));
@@ -96,9 +96,12 @@ void main() {
       expect(find.text('1920 : 1080'), findsOneWidget);
       expect(find.text('AWB'), findsOneWidget);
       expect(find.text('DISP'), findsOneWidget);
-      expect(find.text('RIGHT'), findsOneWidget);
+      expect(find.text('ZOOM'), findsOneWidget);
 
       await tester.tap(find.text('Photo'));
+      await tester.pump();
+
+      await tester.tap(find.text('DISP'));
       await tester.pump();
 
       await tester.tap(find.text('1920 : 1080'));
@@ -150,8 +153,8 @@ void main() {
       // Target tracking view is now loaded in the outlet
       expect(find.byType(CameraViewfinderCard), findsNothing);
 
-      // Tap JCA badge or Cockpit icon to return home
-      await tester.tap(find.text('JCA'));
+      // Tap SAFAR badge or Cockpit icon to return home
+      await tester.tap(find.text('SAFAR'));
       await tester.pump(const Duration(milliseconds: 600));
 
       expect(find.byType(JcaSidebar), findsOneWidget);

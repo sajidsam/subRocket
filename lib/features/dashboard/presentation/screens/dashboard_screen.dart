@@ -39,6 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final MapController _targetMapController = MapController();
   int _selectedNavIndex = 0;
   bool _isMapPrimary = false;
+  bool _isCameraDispActive = true;
 
   @override
   void dispose() {
@@ -215,6 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 flex: 58,
                 child: CameraViewfinderCard(
                   isSwapped: _isMapPrimary,
+                  isDispActive: _isCameraDispActive,
                   onToggleSwap: () => setState(() => _isMapPrimary = !_isMapPrimary),
                 ),
               ),
@@ -224,6 +226,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 flex: 42,
                 child: FlightCameraDeckCard(
                   isSwapped: _isMapPrimary,
+                  isDispActive: _isCameraDispActive,
+                  onToggleDisp: () => setState(() => _isCameraDispActive = !_isCameraDispActive),
                   onToggleSwap: () => setState(() => _isMapPrimary = !_isMapPrimary),
                 ),
               ),

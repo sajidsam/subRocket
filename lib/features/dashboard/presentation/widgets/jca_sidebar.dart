@@ -34,12 +34,12 @@ class _JcaSidebarState extends State<JcaSidebar> {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          // JCA Brand Badge - clicking resets to Home Cockpit
+          // SAFAR Brand Badge - clicking resets to Home Cockpit
           InkWell(
             borderRadius: BorderRadius.circular(8),
             onTap: () => widget.onDestinationSelected(0),
             child: Container(
-              width: 38,
+              width: 48,
               height: 30,
               decoration: BoxDecoration(
                 color: Colors.black,
@@ -51,12 +51,12 @@ class _JcaSidebarState extends State<JcaSidebar> {
               ),
               child: const Center(
                 child: Text(
-                  'JCA',
+                  'SAFAR',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
-                    fontSize: 11,
-                    letterSpacing: 1.0,
+                    fontSize: 9.5,
+                    letterSpacing: 0.8,
                   ),
                 ),
               ),

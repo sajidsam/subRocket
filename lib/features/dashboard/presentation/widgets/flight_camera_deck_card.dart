@@ -10,11 +10,15 @@ import 'camera_viewfinder_card.dart';
 
 class FlightCameraDeckCard extends StatefulWidget {
   final bool isSwapped;
+  final bool isDispActive;
+  final VoidCallback? onToggleDisp;
   final VoidCallback? onToggleSwap;
 
   const FlightCameraDeckCard({
     super.key,
     this.isSwapped = false,
+    this.isDispActive = true,
+    this.onToggleDisp,
     this.onToggleSwap,
   });
 
@@ -26,7 +30,8 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
   bool _isVideoMode = true;
   String _selectedFrameLine = '1280 : 720';
   bool _awbActive = true;
-  bool _dispActive = true;
+  bool _internalDispActive = true;
+  bool get _dispActive => widget.onToggleDisp != null ? widget.isDispActive : _internalDispActive;
 
   // Slider: Resolution px (px values: 2 to 14 px)
   double _resolutionPx = 8.0;
@@ -81,11 +86,12 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
     return LayoutBuilder(
       builder: (context, constraints) {
         final double availWidth = constraints.maxWidth;
-        final bool isCompact = availWidth < 620;
+        final bool isCompact = availWidth < 680;
         final double section1Width = isCompact ? 140.0 : 170.0;
-        final double section2Width = isCompact ? 135.0 : 160.0;
-        final double section3Width = isCompact ? 68.0 : 78.0;
-        final double gap = isCompact ? 6.0 : 8.0;
+        final double section2Width = isCompact ? 190.0 : 250.0;
+        final double section3Width = isCompact ? 75.0 : 92.0;
+        final double gap = isCompact ? 6.0 : 10.0;
+        final double gapResToFrame = isCompact ? 14.0 : 24.0;
 
         return Container(
           decoration: BoxDecoration(
@@ -204,7 +210,7 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
 
               SizedBox(width: gap),
 
-              // Section 2: Compact / Minimized Resolution px Slider + ISO / HDR / DVR Mode Bar
+              // Section 2: Resolution px Slider (250px) + ISO / HDR / DVR Mode Bar
               SizedBox(
                 width: section2Width,
                 child: Column(
@@ -220,7 +226,8 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
                 ),
               ),
 
-              SizedBox(width: gap),
+              // Increased gap between Resolution px and FRAME LINE
+              SizedBox(width: gapResToFrame),
 
               // Section 3: FRAME LINE Resolution Selector
               SizedBox(
@@ -262,24 +269,15 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
                 ),
               ),
 
-              SizedBox(width: gap),
+              // Spacer to right-align ZOOM and D-Pad controls completely to the far right
+              const Spacer(),
 
-              // Section 4 & 5: Hardware Camera Controls (D-Pad + RIGHT Dial, 2x enlarged and aligned)
+              // Section 4 & 5: Hardware Camera Controls (ZOOM Dial on LEFT, D-Pad on RIGHT)
               Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // D-Pad + AWB/DISP unit (2x Size: 104px)
-                  _CameraDpadControl(
-                    awbActive: _awbActive,
-                    dispActive: _dispActive,
-                    onToggleAwb: () => setState(() => _awbActive = !_awbActive),
-                    onToggleDisp: () => setState(() => _dispActive = !_dispActive),
-                  ),
-
-                  const SizedBox(width: 14),
-
-                  // RIGHT Rotary Dial Knob (2x Size: 104px, vertically aligned with the D-Pad!)
+                  // ZOOM Rotary Dial Knob (2x Size: 100px on LEFT)
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -289,15 +287,34 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
                       _RotaryKnobDial(
                         value: _knobValue,
                         size: const Size(100, 100),
-                        label: 'RIGHT',
+                        label: 'ZOOM',
                         onChanged: (val) {
                           setState(() => _knobValue = val);
                         },
                       ),
                     ],
                   ),
+
+                  const SizedBox(width: 14),
+
+                  // D-Pad + AWB/DISP unit (2x Size: 100px on RIGHT)
+                  _CameraDpadControl(
+                    awbActive: _awbActive,
+                    dispActive: _dispActive,
+                    onToggleAwb: () => setState(() => _awbActive = !_awbActive),
+                    onToggleDisp: () {
+                      if (widget.onToggleDisp != null) {
+                        widget.onToggleDisp!();
+                      } else {
+                        setState(() => _internalDispActive = !_internalDispActive);
+                      }
+                    },
+                  ),
                 ],
               ),
+
+              // 20px spacing to shift D-Pad and controls left from right edge
+              const SizedBox(width: 20),
             ],
           ),
         );
@@ -1112,7 +1129,7 @@ class _CameraDpadControl extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 10),
                 Expanded(
                   child: InkWell(
                     borderRadius: BorderRadius.circular(4),
