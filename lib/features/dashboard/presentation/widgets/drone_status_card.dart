@@ -1,5 +1,7 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/models/flight_mode.dart';
 import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
 import '../../../../core/services/mavlink_service.dart';
@@ -23,8 +25,8 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
   void _updateControls(BuildContext context) {
     final mavlink = context.read<MavlinkService>();
     final throttleRatio = (_throttlePercent / 50.0 - 1.0).clamp(-1.0, 1.0);
-    final pitch = -(_rightStickPos.dy / 36.0).clamp(-1.0, 1.0);
-    final roll = (_rightStickPos.dx / 36.0).clamp(-1.0, 1.0);
+    final pitch = -(_rightStickPos.dy / 22.0).clamp(-1.0, 1.0);
+    final roll = (_rightStickPos.dx / 22.0).clamp(-1.0, 1.0);
 
     mavlink.setThrottle(_throttlePercent);
     mavlink.simulator.setManualInputs(
@@ -49,24 +51,25 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // 1. Battery Telemetry Section (Exact Reference Image Match)
           _buildBatterySection(vehicle),
 
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
 
           // 2. ArduPilot / Drone Flight Telemetry Grid (GSPD, VSPD, ALT, RTH, GPS, MODE)
           _buildFlightTelemetryGrid(vehicle),
 
           const SizedBox(height: 6),
 
-          // 3. Flight Control Deck (3x Bigger Redesigned Aerospace Speed Slider + Aerospace Gimbal)
-          _buildFlightControlDeck(mavlink, vehicle),
+          // 3. Flight Control Deck (2x Bigger Redesigned Aerospace Speed Slider + Aerospace Gimbal)
+          Expanded(
+            child: _buildFlightControlDeck(mavlink, vehicle),
+          ),
 
           const SizedBox(height: 6),
 
-          // 4. Altitude Limited Slider Section
+          // 4. Altitude Limit Slider Section
           _buildAltitudeSection(vehicle),
         ],
       ),
@@ -78,86 +81,67 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
     final batteryPct = vehicle.batteryRemaining > 0 ? vehicle.batteryRemaining : 50;
     final mahCurrent = (batteryPct / 100 * 4366).toInt();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          'Battery',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
-          ),
+    return CustomPaint(
+      painter: _CornerBracketsPainter(
+        color: Colors.white70,
+        bracketLength: 8.0,
+        strokeWidth: 1.5,
+      ),
+      child: Container(
+        margin: const EdgeInsets.all(4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E222A),
+          borderRadius: BorderRadius.circular(3),
         ),
-        const SizedBox(height: 8),
-        CustomPaint(
-          painter: _CornerBracketsPainter(
-            color: Colors.white70,
-            bracketLength: 8.0,
-            strokeWidth: 1.5,
-          ),
-          child: Container(
-            margin: const EdgeInsets.all(4),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E222A),
-              borderRadius: BorderRadius.circular(3),
+        child: Row(
+          children: [
+            // Tactical Orange Battery Cell
+            _TacticalBatteryIcon(percent: batteryPct),
+            const SizedBox(width: 8),
+            Text(
+              '$batteryPct%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'monospace',
+              ),
             ),
-            child: Row(
-              children: [
-                // Tactical Orange Battery Cell
-                _TacticalBatteryIcon(percent: batteryPct),
-                const SizedBox(width: 8),
-                Text(
-                  '$batteryPct%',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '$mahCurrent / 4366 Mah',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'monospace',
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(width: 1, height: 16, color: Colors.white24),
-                const SizedBox(width: 12),
-                const Text(
-                  '27°C',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-              ],
+            const Spacer(),
+            Text(
+              '$mahCurrent / 4366 Mah',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'monospace',
+                letterSpacing: 0.2,
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Container(width: 1, height: 16, color: Colors.white24),
+            const SizedBox(width: 12),
+            const Text(
+              '27°C',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-  // 2. ArduPilot / Drone Flight Telemetry Grid (Placed directly under Battery section)
+  // 2. ArduPilot / Drone Flight Telemetry Grid (GSPD, VSPD, ALT with pure white font)
   Widget _buildFlightTelemetryGrid(VehicleState vehicle) {
     final gspd = (vehicle.groundspeed > 0 ? vehicle.groundspeed : 12.4).toStringAsFixed(1);
     final vspd = '${vehicle.climbRate >= 0 ? '+' : ''}${vehicle.climbRate.toStringAsFixed(1)}';
     final alt = (vehicle.altitudeAgl > 0 ? vehicle.altitudeAgl : 45.2).toStringAsFixed(1);
-    final rthDist = (vehicle.distanceToHome > 0 ? vehicle.distanceToHome : 184.0).toStringAsFixed(0);
-    final sats = '${vehicle.satellitesVisible}';
-    final modeName = vehicle.mode.name.toUpperCase();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,30 +164,13 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: Colors.white12, width: 1),
           ),
-          child: Column(
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Expanded(child: _buildTelemCell('GSPD', '$gspd m/s', const Color(0xFF20DFB3))),
-                  Container(width: 1, height: 26, color: Colors.white12),
-                  Expanded(child: _buildTelemCell('VSPD', '$vspd m/s', const Color(0xFFFA7B35))),
-                  Container(width: 1, height: 26, color: Colors.white12),
-                  Expanded(child: _buildTelemCell('ALT', '$alt m', Colors.white)),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 4),
-                child: Divider(color: Colors.white10, height: 1),
-              ),
-              Row(
-                children: [
-                  Expanded(child: _buildTelemCell('RTH', '$rthDist m', const Color(0xFFFFB74D))),
-                  Container(width: 1, height: 26, color: Colors.white12),
-                  Expanded(child: _buildTelemCell('GPS', '$sats Sats', const Color(0xFF64B5F6))),
-                  Container(width: 1, height: 26, color: Colors.white12),
-                  Expanded(child: _buildTelemCell('MODE', modeName, const Color(0xFF81C784))),
-                ],
-              ),
+              Expanded(child: _buildTelemCell('GSPD', '$gspd m/s', Colors.white)),
+              Container(width: 1, height: 22, color: Colors.white12),
+              Expanded(child: _buildTelemCell('VSPD', '$vspd m/s', Colors.white)),
+              Container(width: 1, height: 22, color: Colors.white12),
+              Expanded(child: _buildTelemCell('ALT', '$alt m', Colors.white)),
             ],
           ),
         ),
@@ -238,198 +205,176 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
     );
   }
 
-  // 2. Flight Control Deck (Seamless integration without artificial sub-box)
+  // 2. Flight Control Deck (2x Bigger Speed Throttle on Left, Pitch/Roll + ESTOP/RTH on Right)
   Widget _buildFlightControlDeck(MavlinkService mavlink, VehicleState vehicle) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Mode & Arm Quick Bar
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Arm / Disarm Status Button
-            InkWell(
-              borderRadius: BorderRadius.circular(6),
-              onTap: () {
-                if (vehicle.isArmed) {
-                  mavlink.disarmVehicle();
-                } else {
-                  mavlink.armVehicle();
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: vehicle.isArmed ? const Color(0xFFEF4444) : const Color(0xFF10B981),
-                  borderRadius: BorderRadius.circular(6),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (vehicle.isArmed ? Colors.red : Colors.green).withValues(alpha: 0.35),
-                      blurRadius: 5,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      vehicle.isArmed ? Icons.lock_open : Icons.lock,
-                      color: Colors.white,
-                      size: 11,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      vehicle.isArmed ? 'ARMED' : 'DISARMED',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.6,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Emergency Stop Button
-            InkWell(
-              borderRadius: BorderRadius.circular(6),
-              onTap: () => mavlink.emergencyStop(),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF191D26),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFFA7B35).withValues(alpha: 0.6), width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFA7B35).withValues(alpha: 0.2),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.warning_amber_rounded, color: Color(0xFFFA7B35), size: 12),
-                    SizedBox(width: 4),
-                    Text(
-                      'ESTOP',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.6,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        // Left Column: 2x Bigger Aerospace Speed / Throttle Slider (utilizing vertical space)
+        Expanded(
+          child: _buildAerospaceSpeedSlider(mavlink, vehicle),
         ),
 
-        const SizedBox(height: 8),
+        // Subtle Technical Vertical Divider
+        Container(
+          width: 1,
+          height: 280,
+          color: Colors.white12,
+        ),
 
-        // Controls Row: 3x Bigger Aerospace Speed Slider (Left) + Aerospace Gimbal (Right)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // 3x Bigger Aerospace Vertical Speed / Throttle Slider
-            _buildAerospaceSpeedSlider(mavlink, vehicle),
-
-            // Subtle Technical Vertical Divider
-            Container(
-              width: 1,
-              height: 220,
-              color: Colors.white12,
-            ),
-
-            // Aerospace Gimbal Joystick (Pitch & Roll)
-            _buildAerospaceGimbal(
-              title: 'PITCH / ROLL',
-              position: _rightStickPos,
-              upLabel: 'FWD ▲',
-              downLabel: 'REV ▼',
-              leftLabel: '◀ L',
-              rightLabel: 'R ▶',
-              knobColor: const Color(0xFF20DFB3),
-              onPanUpdate: (d) => setState(() {
-                _rightStickPos = Offset(
-                  (_rightStickPos.dx + d.delta.dx).clamp(-34.0, 34.0),
-                  (_rightStickPos.dy + d.delta.dy).clamp(-34.0, 34.0),
-                );
-                _updateControls(context);
-              }),
-              onPanEnd: (d) => setState(() {
-                _rightStickPos = Offset.zero; // Full spring return to center
-                _updateControls(context);
-              }),
-            ),
-          ],
+        // Right Column: Pitch/Roll 3D Button in original position + ESTOP & RTH directly beneath
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildAerospaceGimbal(
+                title: 'PITCH / ROLL',
+                position: _rightStickPos,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildEstopButton(mavlink),
+                  const SizedBox(width: 8),
+                  _buildRthButton(mavlink, vehicle),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  // 3x Bigger Redesigned Aerospace Vertical Speed / Throttle Slider
-  Widget _buildAerospaceSpeedSlider(MavlinkService mavlink, VehicleState vehicle) {
-    const faderHeight = 220.0;
-    const faderWidth = 76.0;
-    const knobHeight = 32.0;
-    const knobWidth = 56.0;
-    const topMargin = 16.0;
-    const bottomMargin = 16.0;
-    const availableTravel = faderHeight - topMargin - bottomMargin - knobHeight;
-
-    final ratio = (_throttlePercent / 100.0).clamp(0.0, 1.0);
-    final knobTop = (1.0 - ratio) * availableTravel + topMargin;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Live Speed / Throttle HUD Readout Pill
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: const Color(0xFF13171F),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFFFA7B35).withValues(alpha: 0.5), width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFA7B35),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                'THR: ${_throttlePercent.toInt()}%',
-                style: const TextStyle(
-                  color: Color(0xFFFA7B35),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ],
-          ),
+  // Emergency Stop (ESTOP) Button
+  Widget _buildEstopButton(MavlinkService mavlink) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(6),
+      onTap: () => mavlink.emergencyStop(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+        decoration: BoxDecoration(
+          color: const Color(0xFF181B22),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFFA7B35).withValues(alpha: 0.7), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFA7B35).withValues(alpha: 0.2),
+              blurRadius: 5,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
-        const SizedBox(height: 6),
-        GestureDetector(
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFFA7B35), size: 13),
+            SizedBox(width: 5),
+            Text(
+              'ESTOP',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Return to Home (RTH) Button (vertically aligned with ESTOP under Pitch/Roll)
+  Widget _buildRthButton(MavlinkService mavlink, VehicleState vehicle) {
+    final isRtl = vehicle.mode == FlightMode.rtl;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(6),
+      onTap: () {
+        mavlink.setFlightMode(FlightMode.rtl);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+        decoration: BoxDecoration(
+          color: isRtl ? const Color(0xFF2C3545) : const Color(0xFF181B22),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isRtl ? const Color(0xFF20DFB3) : Colors.white24,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isRtl
+                  ? const Color(0xFF20DFB3).withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.5),
+              blurRadius: 5,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.home_outlined,
+              color: isRtl ? const Color(0xFF20DFB3) : Colors.white70,
+              size: 13,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              'RTH',
+              style: TextStyle(
+                color: isRtl ? const Color(0xFF20DFB3) : Colors.white,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getThrottleStatusColor(double percent) {
+    if (percent <= 0) {
+      return const Color(0xFFFFC107); // Yellow when throttle is 0
+    } else if (percent < 80) {
+      return const Color(0xFF00E676); // Green when throttle is increasing / active
+    } else {
+      return const Color(0xFFFF3D00); // Red when throttle reaches / approaches max
+    }
+  }
+
+  // 2x Bigger Monochrome Black & White Vertical Speed / Throttle Slider (utilizing vertical empty space)
+  Widget _buildAerospaceSpeedSlider(MavlinkService mavlink, VehicleState vehicle) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final faderHeight = constraints.maxHeight.isFinite && constraints.maxHeight > 200
+            ? constraints.maxHeight
+            : 360.0;
+        const faderWidth = 110.0;
+        const knobHeight = 34.0;
+        const knobWidth = 54.0;
+        const topMargin = 14.0;
+        const bottomMargin = 14.0;
+        const trackCenterX = 52.0;
+        final availableTravel = faderHeight - topMargin - bottomMargin - knobHeight;
+
+        final ratio = (_throttlePercent / 100.0).clamp(0.0, 1.0);
+        final knobTop = (1.0 - ratio) * availableTravel + topMargin;
+        final statusColor = _getThrottleStatusColor(_throttlePercent);
+
+        return GestureDetector(
           behavior: HitTestBehavior.opaque,
           onVerticalDragUpdate: (details) {
             final localY = details.localPosition.dy;
-            final trackRatio = (1.0 - ((localY - topMargin) / availableTravel)).clamp(0.0, 1.0);
+            final trackRatio = (1.0 - ((localY - topMargin - (knobHeight / 2)) / availableTravel)).clamp(0.0, 1.0);
             setState(() {
               _throttlePercent = (trackRatio * 100.0).roundToDouble();
             });
@@ -437,110 +382,133 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
           },
           onTapDown: (details) {
             final localY = details.localPosition.dy;
-            final trackRatio = (1.0 - ((localY - topMargin) / availableTravel)).clamp(0.0, 1.0);
+            final trackRatio = (1.0 - ((localY - topMargin - (knobHeight / 2)) / availableTravel)).clamp(0.0, 1.0);
             setState(() {
               _throttlePercent = (trackRatio * 100.0).roundToDouble();
             });
             _updateControls(context);
           },
-          child: Container(
+          child: SizedBox(
             width: faderWidth,
             height: faderHeight,
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F1218),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white12, width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
             child: Stack(
-              alignment: Alignment.center,
               children: [
-                // Precision Aerospace Track with Active Energy Fill & Ladder Steps
+                // Precision Monochrome Track with Right-side Ruler Scale
                 Positioned.fill(
                   child: CustomPaint(
                     painter: _AerospaceSpeedSliderTrackPainter(
                       throttlePercent: _throttlePercent,
                       topMargin: topMargin,
                       bottomMargin: bottomMargin,
+                      centerX: trackCenterX,
                     ),
                   ),
                 ),
 
-                // Aerospace Fader Knob Handle
+                // Metallic Silver / White Fader Knob Handle with Status Circle LED Jewel
                 Positioned(
+                  left: trackCenterX - (knobWidth / 2),
                   top: knobTop,
-                  child: _buildAerospaceFaderKnob(knobWidth, knobHeight),
+                  child: _buildAerospaceFaderKnob(knobWidth, knobHeight, statusColor),
                 ),
               ],
             ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  // Modern Aerospace Fader Knob Handle
-  Widget _buildAerospaceFaderKnob(double width, double height) {
+  // Modern Ergonomic 3D Metallic Silver / White Fader Knob Handle
+  Widget _buildAerospaceFaderKnob(double width, double height, Color statusColor) {
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: const Color(0xFF1E2430),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFF384355), width: 1.2),
+        borderRadius: BorderRadius.circular(5),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFFFFFFFF), // pure bright top highlight
+            Color(0xFFE2E8F0), // brushed silver sheen
+            Color(0xFFCBD5E1), // metallic core
+            Color(0xFF94A3B8), // dark silver bottom bevel shadow
+          ],
+          stops: [0.0, 0.25, 0.70, 1.0],
+        ),
+        border: Border.all(color: Colors.white, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.85),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: const Color(0xFFFA7B35).withValues(alpha: 0.35),
-            blurRadius: 6,
+            color: Colors.black.withValues(alpha: 0.75),
+            blurRadius: 7,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Left chevron indicator notch
-          const Positioned(
+          // Left side tactile grip notches (dark contrast on silver)
+          Positioned(
             left: 3,
-            child: Icon(Icons.arrow_right, color: Color(0xFFFA7B35), size: 14),
-          ),
-          // Right chevron indicator notch
-          const Positioned(
-            right: 3,
-            child: Icon(Icons.arrow_left, color: Color(0xFFFA7B35), size: 14),
-          ),
-          // Center laser stripe
-          Container(
-            width: width * 0.45,
-            height: 3.5,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFA7B35),
-              borderRadius: BorderRadius.circular(2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFA7B35).withValues(alpha: 0.6),
-                  blurRadius: 4,
-                ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(width: 2.2, height: 4.5, decoration: BoxDecoration(color: const Color(0xFF334155), borderRadius: BorderRadius.circular(1))),
+                const SizedBox(height: 3),
+                Container(width: 2.2, height: 4.5, decoration: BoxDecoration(color: const Color(0xFF334155), borderRadius: BorderRadius.circular(1))),
               ],
             ),
           ),
-          // Center white indicator pip
+
+          // Right side tactile grip notches (dark contrast on silver)
+          Positioned(
+            right: 3,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(width: 2.2, height: 4.5, decoration: BoxDecoration(color: const Color(0xFF334155), borderRadius: BorderRadius.circular(1))),
+                const SizedBox(height: 3),
+                Container(width: 2.2, height: 4.5, decoration: BoxDecoration(color: const Color(0xFF334155), borderRadius: BorderRadius.circular(1))),
+              ],
+            ),
+          ),
+
+          // Center horizontal index groove line (dark contrast on silver)
           Container(
-            width: 4,
-            height: 4,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            width: width * 0.58,
+            height: 1.5,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+
+          // Center Status LED Jewel Indicator (Yellow at 0%, Green when >0 & <80%, Red when >=80%)
+          Container(
+            width: 8.5,
+            height: 8.5,
+            decoration: BoxDecoration(
+              color: statusColor,
               shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF0F172A), width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: statusColor.withValues(alpha: 0.65),
+                  blurRadius: 4.5,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Container(
+                width: 2.5,
+                height: 2.5,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+              ),
             ),
           ),
         ],
@@ -548,28 +516,23 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
     );
   }
 
-  // Aerospace Gimbal Joystick Widget
+  // 3D Black Circular Tactile Joystick matching Image Reference (Pitch & Roll)
   Widget _buildAerospaceGimbal({
     required String title,
     required Offset position,
-    required String upLabel,
-    required String downLabel,
-    required String leftLabel,
-    required String rightLabel,
-    required Color knobColor,
-    required GestureDragUpdateCallback onPanUpdate,
-    required GestureDragEndCallback onPanEnd,
   }) {
-    const double stickDiameter = 110.0;
+    const double stickDiameter = 120.0;
+    const double maxTravel = 22.0;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           title,
           style: const TextStyle(
             color: GcsColors.textMuted,
-            fontSize: 9.0,
+            fontSize: 9.5,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.8,
           ),
@@ -577,106 +540,54 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
         const SizedBox(height: 5),
         GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onPanUpdate: onPanUpdate,
-          onPanEnd: onPanEnd,
-          child: Container(
+          onPanDown: (d) {
+            final center = const Offset(stickDiameter / 2, stickDiameter / 2);
+            final delta = d.localPosition - center;
+            final clamped = delta.distance > maxTravel
+                ? delta * (maxTravel / delta.distance)
+                : delta;
+            setState(() {
+              _rightStickPos = clamped;
+              _updateControls(context);
+            });
+          },
+          onPanUpdate: (d) {
+            final center = const Offset(stickDiameter / 2, stickDiameter / 2);
+            final delta = d.localPosition - center;
+            final clamped = delta.distance > maxTravel
+                ? delta * (maxTravel / delta.distance)
+                : delta;
+            setState(() {
+              _rightStickPos = clamped;
+              _updateControls(context);
+            });
+          },
+          onPanEnd: (d) => setState(() {
+            _rightStickPos = Offset.zero; // Full spring return to center
+            _updateControls(context);
+          }),
+          onPanCancel: () => setState(() {
+            _rightStickPos = Offset.zero;
+            _updateControls(context);
+          }),
+          child: SizedBox(
             width: stickDiameter,
             height: stickDiameter,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const RadialGradient(
-                colors: [
-                  Color(0xFF252B36),
-                  Color(0xFF191D24),
-                  Color(0xFF0F1217),
-                ],
-              ),
-              border: Border.all(color: Colors.white24, width: 1.4),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.65),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Precision Crosshairs & Radar Concentric Rings
+                // 1. 3D Black Base Socket with 4 Outer White Chevron Arrows
                 CustomPaint(
                   size: const Size(stickDiameter, stickDiameter),
-                  painter: _AerospaceGimbalPainter(),
-                ),
-
-                // Axis Labels
-                Positioned(
-                  top: 3,
-                  child: Text(
-                    upLabel,
-                    style: const TextStyle(color: Colors.white54, fontSize: 7, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Positioned(
-                  bottom: 3,
-                  child: Text(
-                    downLabel,
-                    style: const TextStyle(color: Colors.white54, fontSize: 7, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Positioned(
-                  left: 4,
-                  child: Text(
-                    leftLabel,
-                    style: const TextStyle(color: Colors.white54, fontSize: 6.5, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Positioned(
-                  right: 4,
-                  child: Text(
-                    rightLabel,
-                    style: const TextStyle(color: Colors.white54, fontSize: 6.5, fontWeight: FontWeight.bold),
+                  painter: _TactileBlackPitchRollBasePainter(
+                    offset: position,
                   ),
                 ),
 
-                // Interactive Gimbal Thumb Knob
+                // 2. Movable 3D Big Button (Draggable in all directions: Up, Down, Left, Right)
                 Transform.translate(
-                  offset: Offset(
-                    position.dx.clamp(-32.0, 32.0),
-                    position.dy.clamp(-32.0, 32.0),
-                  ),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          knobColor,
-                          knobColor.withValues(alpha: 0.8),
-                          const Color(0xFF13171E),
-                        ],
-                      ),
-                      border: Border.all(color: Colors.white, width: 1.4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: knobColor.withValues(alpha: 0.5),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 9,
-                        height: 9,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
+                  offset: position,
+                  child: _buildTactileBigButton(),
                 ),
               ],
             ),
@@ -686,22 +597,48 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
     );
   }
 
-  // 3. Altitude Limited Section
+  // 3D Movable Tactile Big Button (Pitch & Roll Knob matching user reference)
+  Widget _buildTactileBigButton() {
+    const double buttonSize = 72.0;
+
+    return Container(
+      width: buttonSize,
+      height: buttonSize,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.85),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: CustomPaint(
+        size: const Size(buttonSize, buttonSize),
+        painter: _TactileBigButtonPainter(
+          isDeflected: _rightStickPos != Offset.zero,
+        ),
+      ),
+    );
+  }
+
+  // 3. Altitude Limit Section
   Widget _buildAltitudeSection(VehicleState vehicle) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         const Text(
-          'Altitude limited',
+          'Altitude limit',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 13,
+            fontSize: 11.5,
             fontWeight: FontWeight.bold,
             letterSpacing: 0.3,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 3),
         _RulerSlider(
           value: _altitudeMl,
           min: 10.0,
@@ -716,7 +653,7 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
             );
           },
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         _ScaleLabelsRow(
           steps: _altitudeSteps,
           currentVal: _altitudeMl,
@@ -735,7 +672,7 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
   }
 }
 
-// Interactive Ruler Slider Track with Orange Handle & Readout
+// Interactive Ruler Slider Track with Orange Handle & Readout (Compact Size)
 class _RulerSlider extends StatelessWidget {
   final double value;
   final double min;
@@ -754,10 +691,10 @@ class _RulerSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 36,
+      height: 28,
       decoration: BoxDecoration(
         color: const Color(0xFF13171E),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(5),
         border: Border.all(color: Colors.white12, width: 1),
       ),
       child: Row(
@@ -767,7 +704,7 @@ class _RulerSlider extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final trackWidth = constraints.maxWidth;
-                const thumbWidth = 22.0;
+                const thumbWidth = 20.0;
                 final availableWidth = trackWidth - thumbWidth;
                 final ratio = ((value - min) / (max - min)).clamp(0.0, 1.0);
                 final thumbLeft = ratio * availableWidth;
@@ -803,7 +740,7 @@ class _RulerSlider extends StatelessWidget {
                           width: thumbWidth,
                           decoration: BoxDecoration(
                             color: const Color(0xFFFA7B35),
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(3),
                             boxShadow: [
                               BoxShadow(
                                 color: const Color(0xFFFA7B35).withValues(alpha: 0.35),
@@ -817,9 +754,9 @@ class _RulerSlider extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(width: 1.2, height: 13, color: const Color(0xFF1E222A)),
-                                const SizedBox(width: 2.5),
-                                Container(width: 1.2, height: 13, color: const Color(0xFF1E222A)),
+                                Container(width: 1.0, height: 10, color: const Color(0xFF1E222A)),
+                                const SizedBox(width: 2.0),
+                                Container(width: 1.0, height: 10, color: const Color(0xFF1E222A)),
                               ],
                             ),
                           ),
@@ -833,17 +770,17 @@ class _RulerSlider extends StatelessWidget {
           ),
 
           // Divider
-          Container(width: 1, height: 22, color: Colors.white24),
+          Container(width: 1, height: 18, color: Colors.white24),
 
           // Value Readout (e.g. 200 ML)
           Container(
-            width: 62,
+            width: 58,
             alignment: Alignment.center,
             child: Text(
               '${value.round()} $unit',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 11.5,
+                fontSize: 10.5,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'monospace',
               ),
@@ -1035,146 +972,298 @@ class _CornerBracketsPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// Painter for Aerospace Gimbal Crosshair Radar
-class _AerospaceGimbalPainter extends CustomPainter {
+// Custom Painter for 3D Black Circular Base Socket with 4 White Chevron Arrows
+class _TactileBlackPitchRollBasePainter extends CustomPainter {
+  final Offset offset;
+
+  const _TactileBlackPitchRollBasePainter({this.offset = Offset.zero});
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
+    final rOuterBezel = size.width * 0.40; // 48.0 on 120
+    final rSocketCavity = size.width * 0.35; // 42.0 on 120
+    final rArrow = size.width * 0.46; // 55.2 on 120
 
-    final crosshairPaint = Paint()
-      ..color = Colors.white12
-      ..strokeWidth = 1.0;
+    // 1. Ambient Drop Shadow under outer bezel socket
+    final ambientShadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.75)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
+    canvas.drawCircle(center + const Offset(0, 3), rOuterBezel, ambientShadowPaint);
 
-    // Crosshairs
-    canvas.drawLine(Offset(10, center.dy), Offset(size.width - 10, center.dy), crosshairPaint);
-    canvas.drawLine(Offset(center.dx, 10), Offset(center.dx, size.height - 10), crosshairPaint);
+    // 2. Outer Bezel Socket Ring (smooth dark metallic socket rim)
+    final bezelGradient = const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFF2C323E), // highlight rim top-left
+        Color(0xFF1B1F27),
+        Color(0xFF0F1116), // deep shadow bottom-right
+      ],
+      stops: [0.0, 0.45, 1.0],
+    );
+    final bezelPaint = Paint()
+      ..shader = bezelGradient.createShader(Rect.fromCircle(center: center, radius: rOuterBezel));
+    canvas.drawCircle(center, rOuterBezel, bezelPaint);
 
-    // Concentric Deflection Rings
-    final ringPaint = Paint()
-      ..color = Colors.white10
-      ..strokeWidth = 0.8
-      ..style = PaintingStyle.stroke;
+    // Outer bezel crisp stroke rim
+    final bezelRimPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFF4A5568),
+          Color(0xFF1E232B),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: rOuterBezel));
+    canvas.drawCircle(center, rOuterBezel, bezelRimPaint);
 
-    // Inner 33% deflection ring
-    canvas.drawCircle(center, size.width * 0.18, ringPaint);
-    // Mid 66% deflection ring
-    ringPaint.color = Colors.white12;
-    canvas.drawCircle(center, size.width * 0.32, ringPaint);
-    // Outer boundary ring
-    ringPaint.color = Colors.white24;
-    ringPaint.strokeWidth = 1.0;
-    canvas.drawCircle(center, size.width * 0.44, ringPaint);
+    // 3. Recessed Socket Well / Cavity (dark deep pocket where the big button sits and moves)
+    final cavityGradient = const RadialGradient(
+      center: Alignment(0.0, 0.1),
+      radius: 0.95,
+      colors: [
+        Color(0xFF050608),
+        Color(0xFF0A0C10),
+        Color(0xFF14171E),
+      ],
+      stops: [0.0, 0.6, 1.0],
+    );
+    final cavityPaint = Paint()
+      ..shader = cavityGradient.createShader(Rect.fromCircle(center: center, radius: rSocketCavity));
+    canvas.drawCircle(center, rSocketCavity, cavityPaint);
+
+    // Inner cavity shadow stroke
+    final cavityRimPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..color = const Color(0xFF050608);
+    canvas.drawCircle(center, rSocketCavity, cavityRimPaint);
+
+    // 4. Four Directional Chevron Arrows (White)
+    final isUp = offset.dy < -4.0;
+    final isDown = offset.dy > 4.0;
+    final isLeft = offset.dx < -4.0;
+    final isRight = offset.dx > 4.0;
+
+    _drawChevron(canvas, Offset(center.dx, center.dy - rArrow), 0, isUp);
+    _drawChevron(canvas, Offset(center.dx + rArrow, center.dy), pi / 2, isRight);
+    _drawChevron(canvas, Offset(center.dx, center.dy + rArrow), pi, isDown);
+    _drawChevron(canvas, Offset(center.dx - rArrow, center.dy), -pi / 2, isLeft);
+  }
+
+  void _drawChevron(Canvas canvas, Offset pos, double angle, bool isPressed) {
+    canvas.save();
+    canvas.translate(pos.dx, pos.dy);
+    canvas.rotate(angle);
+
+    const halfW = 6.0;
+    const halfH = 4.0;
+
+    final path = Path()
+      ..moveTo(-halfW, halfH)
+      ..lineTo(0, -halfH)
+      ..lineTo(halfW, halfH);
+
+    if (isPressed) {
+      // Pressed arrow glow
+      final glowPaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.6)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4.5
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+      canvas.drawPath(path, glowPaint);
+    }
+
+    final arrowPaint = Paint()
+      ..color = isPressed ? Colors.white : Colors.white.withValues(alpha: 0.92)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    canvas.drawPath(path, arrowPaint);
+    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _TactileBlackPitchRollBasePainter oldDelegate) =>
+      oldDelegate.offset != offset;
 }
 
-// Modern Aerospace Vertical Speed / Throttle Slider Track Painter
+// Custom Painter for 3D Movable Big Tactile Button (Pitch & Roll Knob)
+class _TactileBigButtonPainter extends CustomPainter {
+  final bool isDeflected;
+
+  const _TactileBigButtonPainter({this.isDeflected = false});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final rOuter = size.width / 2; // 36.0
+    final rDish = size.width * 0.32; // 23.0 concave center depression
+
+    // 1. Main Convex 3D Disc Surface (top-left metallic highlight to dark matte bottom-right)
+    final discGradient = const RadialGradient(
+      center: Alignment(-0.35, -0.35),
+      radius: 0.95,
+      colors: [
+        Color(0xFF424B5D), // bright convex reflection
+        Color(0xFF262C38),
+        Color(0xFF161A22),
+        Color(0xFF0C0E13), // deep black perimeter
+      ],
+      stops: [0.0, 0.35, 0.75, 1.0],
+    );
+    final discPaint = Paint()
+      ..shader = discGradient.createShader(Rect.fromCircle(center: center, radius: rOuter));
+    canvas.drawCircle(center, rOuter, discPaint);
+
+    // Raised button outer bevel highlight rim
+    final discRimPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFF70819E), // crisp top-left highlight
+          Color(0xFF2E3544),
+          Color(0xFF090A0D), // dark bottom-right underside
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: rOuter));
+    canvas.drawCircle(center, rOuter, discRimPaint);
+
+    // 2. Subtle Concave Center Thumb Dish (Soft tactile scoop depression)
+    final dishGradient = const RadialGradient(
+      center: Alignment(0.30, 0.30),
+      radius: 0.85,
+      colors: [
+        Color(0xFF28303C), // bottom-right reflection highlight
+        Color(0xFF191D26),
+        Color(0xFF11141B),
+        Color(0xFF08090C), // top-left shadow
+      ],
+      stops: [0.0, 0.4, 0.75, 1.0],
+    );
+    final dishPaint = Paint()
+      ..shader = dishGradient.createShader(Rect.fromCircle(center: center, radius: rDish));
+    canvas.drawCircle(center, rDish, dishPaint);
+
+    final dishRimPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFF07080B),
+          Color(0xFF1C212B),
+          Color(0xFF3F4B5E),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: rDish));
+    canvas.drawCircle(center, rDish, dishRimPaint);
+
+    // 3. Center White Tactile Pip / Dot (Matching reference photo)
+    final pipPaint = Paint()
+      ..color = isDeflected ? Colors.white : Colors.white70
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, 3.0, pipPaint);
+
+    if (isDeflected) {
+      // Glow around pip when active/dragged
+      final glowPaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.6)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+      canvas.drawCircle(center, 4.5, glowPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _TactileBigButtonPainter oldDelegate) =>
+      oldDelegate.isDeflected != isDeflected;
+}
+
+// Monochrome Black & White Vertical Speed / Throttle Slider Track Painter with Right-side Scale
 class _AerospaceSpeedSliderTrackPainter extends CustomPainter {
   final double throttlePercent;
   final double topMargin;
   final double bottomMargin;
+  final double centerX;
 
   const _AerospaceSpeedSliderTrackPainter({
     required this.throttlePercent,
     this.topMargin = 16.0,
     this.bottomMargin = 16.0,
+    this.centerX = 52.0,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final centerX = size.width / 2;
     final topY = topMargin;
     final bottomY = size.height - bottomMargin;
     final trackHeight = bottomY - topY;
-    final ratio = (throttlePercent / 100.0).clamp(0.0, 1.0);
-    final fillTopY = bottomY - ratio * trackHeight;
 
-    // 1. Center Vertical Slot Background
-    final slotRect = Rect.fromLTRB(centerX - 4.5, topY, centerX + 4.5, bottomY);
-    final slotPaint = Paint()..color = const Color(0xFF080B10);
-    canvas.drawRRect(RRect.fromRectAndRadius(slotRect, const Radius.circular(3)), slotPaint);
+    // 1. Vertical Slot Background (Clean rounded slot pill as in reference illustration)
+    final slotRect = Rect.fromLTRB(centerX - 3.5, topY, centerX + 3.5, bottomY);
+    final slotPaint = Paint()..color = const Color(0xFF08090C);
+    canvas.drawRRect(RRect.fromRectAndRadius(slotRect, const Radius.circular(3.5)), slotPaint);
 
-    // 2. Active Illuminated Gradient Energy Fill from 0% up to current level
-    if (ratio > 0.01) {
-      final fillRect = Rect.fromLTRB(centerX - 3.5, fillTopY, centerX + 3.5, bottomY);
-      final fillPaint = Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [
-            Color(0xFFE65100),
-            Color(0xFFFA7B35),
-            Color(0xFFFFB74D),
-          ],
-        ).createShader(fillRect);
-      canvas.drawRRect(RRect.fromRectAndRadius(fillRect, const Radius.circular(2)), fillPaint);
-
-      // Glow on top of fill
-      final glowPaint = Paint()
-        ..color = const Color(0xFFFA7B35).withValues(alpha: 0.6)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
-      canvas.drawCircle(Offset(centerX, fillTopY), 4.0, glowPaint);
-    }
-
-    // 3. Slot Outline
+    // 2. Slot Outline (Crisp monochrome border, no glow)
     final slotBorderPaint = Paint()
-      ..color = Colors.white12
+      ..color = Colors.white24
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
-    canvas.drawRRect(RRect.fromRectAndRadius(slotRect, const Radius.circular(3)), slotBorderPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(slotRect, const Radius.circular(3.5)), slotBorderPaint);
 
-    // 4. Graduated Scale Ladder & Markings (0%, 25%, 50%, 75%, 100%)
+    // 3. Graduated Scale Ruler Markings on the RIGHT SIDE ONLY
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
     const List<int> majorSteps = [100, 75, 50, 25, 0];
 
+    // Major ticks & percentage labels on RIGHT
     for (final step in majorSteps) {
       final stepRatio = step / 100.0;
       final y = bottomY - stepRatio * trackHeight;
-      final isMid = (step == 50);
 
-      // Major tick lines
+      // Major tick line on the right
       final tickPaint = Paint()
-        ..color = isMid
-            ? const Color(0xFFFA7B35).withValues(alpha: 0.9)
-            : (stepRatio <= ratio ? Colors.white70 : Colors.white24)
-        ..strokeWidth = isMid ? 1.8 : 1.2;
+        ..color = Colors.white60
+        ..strokeWidth = 1.2;
+      canvas.drawLine(Offset(centerX + 8, y), Offset(centerX + 16, y), tickPaint);
 
-      // Left tick
-      canvas.drawLine(Offset(centerX - 14, y), Offset(centerX - 6, y), tickPaint);
-      // Right tick
-      canvas.drawLine(Offset(centerX + 6, y), Offset(centerX + 14, y), tickPaint);
-
-      // Percentage label text on left
+      // Percentage number on the right side
       textPainter.text = TextSpan(
         text: '$step',
-        style: TextStyle(
-          color: isMid
-              ? const Color(0xFFFA7B35)
-              : (stepRatio <= ratio ? Colors.white70 : const Color(0xFF555F70)),
+        style: const TextStyle(
+          color: Colors.white70,
           fontSize: 8.5,
-          fontWeight: isMid ? FontWeight.w900 : FontWeight.w700,
+          fontWeight: FontWeight.w700,
           fontFamily: 'monospace',
         ),
       );
       textPainter.layout();
-      textPainter.paint(canvas, Offset(centerX - 18 - textPainter.width, y - textPainter.height / 2));
+      textPainter.paint(canvas, Offset(centerX + 20, y - textPainter.height / 2));
     }
 
-    // Intermediate Minor Ticks (20 subdivisions)
+    // Intermediate Minor Ticks (20 subdivisions) on RIGHT SIDE ONLY
     final minorTickPaint = Paint()
-      ..color = Colors.white10
+      ..color = Colors.white24
       ..strokeWidth = 0.8;
     for (int i = 0; i <= 20; i++) {
       if (i % 5 == 0) continue; // skip major
       final y = topY + (i / 20.0) * trackHeight;
-      canvas.drawLine(Offset(centerX - 10, y), Offset(centerX - 6, y), minorTickPaint);
-      canvas.drawLine(Offset(centerX + 6, y), Offset(centerX + 10, y), minorTickPaint);
+      canvas.drawLine(Offset(centerX + 8, y), Offset(centerX + 13, y), minorTickPaint);
     }
   }
 
   @override
   bool shouldRepaint(covariant _AerospaceSpeedSliderTrackPainter oldDelegate) =>
-      oldDelegate.throttlePercent != throttlePercent;
+      oldDelegate.throttlePercent != throttlePercent ||
+      oldDelegate.centerX != centerX ||
+      oldDelegate.topMargin != topMargin ||
+      oldDelegate.bottomMargin != bottomMargin;
 }

@@ -109,6 +109,15 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
               ),
             ),
 
+            // 3. Bottom-Right: Tactical Compass Navigation Overlay (Always visible on camera feed)
+            const Positioned(
+              bottom: 12,
+              right: 14,
+              width: 145,
+              height: 145,
+              child: TacticalCompassCard(isOverlay: true),
+            ),
+
             // Non-nav HUD Overlays (Toggled on/off with DISP button)
             if (widget.isDispActive) ...[
               // Rule of Thirds Grid Overlay
@@ -360,15 +369,6 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
                     ),
                   ],
                 ),
-              ),
-
-              // Bottom-Right: Tactical Compass Overlay on Camera Feed
-              const Positioned(
-                bottom: 12,
-                right: 14,
-                width: 145,
-                height: 145,
-                child: TacticalCompassCard(isOverlay: true),
               ),
             ],
           ],

@@ -282,14 +282,18 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Header offset matching AWB/DISP height (28 + 4) so circles align perfectly
-                      const SizedBox(height: 32),
+                      // Header offset matching AWB/DISP height (28 + 14) so circles align perfectly
+                      const SizedBox(height: 42),
                       _RotaryKnobDial(
                         value: _knobValue,
                         size: const Size(100, 100),
                         label: 'ZOOM',
                         onChanged: (val) {
                           setState(() => _knobValue = val);
+                          final targetZoom = 10.0 + val * 8.0;
+                          try {
+                            _miniMapController.move(_miniMapController.camera.center, targetZoom);
+                          } catch (_) {}
                         },
                       ),
                     ],
@@ -454,14 +458,14 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 1. Clean Mini OpenStreetMap (NO dark shade)
+        // 1. Clean Mini OpenStreetMap (Interactive with Pinch/Pan/Scroll Zoom)
         FlutterMap(
           mapController: _miniMapController,
           options: MapOptions(
             initialCenter: currentPos,
             initialZoom: 13.0,
             interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.none,
+              flags: InteractiveFlag.all,
             ),
           ),
           children: [
@@ -953,55 +957,42 @@ class _RotaryKnobPainter extends CustomPainter {
     const totalSweep = 270.0 * (pi / 180.0);
     final currentAngle = startAngle + totalSweep * value.clamp(0.0, 1.0);
 
-    // 1. Outer Track (Background Arc)
-    final arcRadius = radius - 4.0;
-    final arcRect = Rect.fromCircle(center: center, radius: arcRadius);
-
-    final bgTrackPaint = Paint()
-      ..color = const Color(0xFF222630)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.8
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawArc(arcRect, startAngle, totalSweep, false, bgTrackPaint);
-
-    // 2. Active Lit Glowing Arc (White)
-    final activeSweep = totalSweep * value.clamp(0.0, 1.0);
-    if (activeSweep > 0.01) {
-      final glowPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.35)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 5.5
-        ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
-
-      final activeArcPaint = Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.8
-        ..strokeCap = StrokeCap.round;
-
-      canvas.drawArc(arcRect, startAngle, activeSweep, false, glowPaint);
-      canvas.drawArc(arcRect, startAngle, activeSweep, false, activeArcPaint);
-    }
-
-    // 3. Concentric Tick Dots Ring
-    final tickRadius = arcRadius - 6.5;
+    // 1. Straight Radial Gauge Tick Marks around Knob (no outer circle or dot marks)
     const int tickCount = 28;
+    final bezelRadius = radius - 10.5;
+    final innerTickRadius = bezelRadius + 2.5;
+    final outerTickRadius = innerTickRadius + 5.5;
+
     for (int i = 0; i < tickCount; i++) {
       final double t = i / (tickCount - 1);
       final double angle = startAngle + t * totalSweep;
-      final Offset dotPos = center + Offset(cos(angle) * tickRadius, sin(angle) * tickRadius);
       final bool isLit = t <= value;
+      final bool isMajor = (i % 5 == 0);
 
-      final dotPaint = Paint()
-        ..color = isLit ? const Color(0xFFBAC3D0) : const Color(0xFF424957);
+      final p1 = center + Offset(cos(angle) * innerTickRadius, sin(angle) * innerTickRadius);
+      final p2 = center + Offset(
+        cos(angle) * (outerTickRadius + (isMajor ? 2.5 : 0.0)),
+        sin(angle) * (outerTickRadius + (isMajor ? 2.5 : 0.0)),
+      );
 
-      canvas.drawCircle(dotPos, 1.3, dotPaint);
+      if (isLit) {
+        final glowPaint = Paint()
+          ..color = Colors.white.withValues(alpha: 0.35)
+          ..strokeWidth = isMajor ? 3.5 : 2.5
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
+        canvas.drawLine(p1, p2, glowPaint);
+      }
+
+      final tickPaint = Paint()
+        ..color = isLit ? Colors.white : const Color(0xFF3F4655)
+        ..strokeWidth = isMajor ? 1.8 : 1.0
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawLine(p1, p2, tickPaint);
     }
 
-    // 4. Outer Bezel / Collar of Rotary Knob
-    final bezelRadius = arcRadius - 10.5;
+    // 2. Outer Bezel / Collar of Rotary Knob
     final bezelRect = Rect.fromCircle(center: center, radius: bezelRadius);
 
     // Drop shadow
@@ -1027,7 +1018,7 @@ class _RotaryKnobPainter extends CustomPainter {
       ..strokeWidth = 1.2;
     canvas.drawCircle(center, bezelRadius, bezelBorderPaint);
 
-    // 5. Inner Rotary Knob Cap (Cylindrical Metallic Disc)
+    // 3. Inner Rotary Knob Cap (Cylindrical Metallic Disc)
     final capRadius = bezelRadius - 5.0;
     final capRect = Rect.fromCircle(center: center, radius: capRadius);
 
@@ -1051,7 +1042,7 @@ class _RotaryKnobPainter extends CustomPainter {
       ..strokeWidth = 1.0;
     canvas.drawCircle(center, capRadius, capBorderPaint);
 
-    // 6. Indicator Pip (Glowing White Dot on Knob)
+    // 4. Indicator Pip (Glowing White Dot on Knob)
     final pipRadius = capRadius * 0.62;
     final pipPos = center + Offset(cos(currentAngle) * pipRadius, sin(currentAngle) * pipRadius);
 
@@ -1159,7 +1150,7 @@ class _CameraDpadControl extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 14),
 
           // Bottom: 2x Circular 4-Way D-Pad with Center Disc Button
           SizedBox(

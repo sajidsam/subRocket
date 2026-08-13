@@ -231,6 +231,8 @@ class MavlinkService extends ChangeNotifier {
     }
   }
 
+  void returnToHome() => setFlightMode(FlightMode.rtl);
+
   void armDisarm(bool arm) {
     vehicle.setArmed(arm);
     if (arm) {

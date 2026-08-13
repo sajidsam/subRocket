@@ -67,7 +67,7 @@ void main() {
       expect(find.byType(TacticalCompassCard), findsAtLeastNWidgets(1));
       expect(find.text('SAFAR'), findsOneWidget);
       expect(find.text('4K . 19.67FPS'), findsOneWidget);
-      expect(find.text('Battery'), findsOneWidget);
+      expect(find.textContaining('Mah'), findsOneWidget);
       expect(find.text('83°'), findsAtLeastNWidgets(1));
     });
 
@@ -82,6 +82,20 @@ void main() {
       await tester.pump();
 
       expect(find.text('HDR'), findsOneWidget);
+    });
+
+    testWidgets('CameraViewfinderCard retains navigation when isDispActive is false', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableWidget(const CameraViewfinderCard(isDispActive: false)));
+      await tester.pump();
+
+      // Navigation compass is still visible
+      expect(find.byType(TacticalCompassCard), findsOneWidget);
+      expect(find.byType(ArtificialHorizonReticle), findsOneWidget);
+
+      // Camera HUD overlays are hidden
+      expect(find.text('HDR'), findsNothing);
+      expect(find.text('4K . 19.67FPS'), findsNothing);
+      expect(find.text('H2.85'), findsNothing);
     });
 
     testWidgets('FlightCameraDeckCard toggles video/photo, resolution lines, and quick camera controls', (WidgetTester tester) async {
@@ -106,18 +120,43 @@ void main() {
 
       await tester.tap(find.text('1920 : 1080'));
       await tester.pump();
+
+      // Test D-Pad controls on Camera Deck
+      expect(find.byIcon(Icons.keyboard_arrow_up), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_left), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_right), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.keyboard_arrow_up));
+      await tester.pump();
     });
 
-    testWidgets('DroneStatusCard displays battery, flight control deck, and responds to sliders', (WidgetTester tester) async {
+    testWidgets('DroneStatusCard displays battery, flight control deck, and responds to sliders and 3D joystick', (WidgetTester tester) async {
       await tester.pumpWidget(createTestableWidget(const DroneStatusCard()));
       await tester.pump();
 
-      expect(find.text('Battery'), findsOneWidget);
-      expect(find.text('THR: 50%'), findsOneWidget);
+      expect(find.text('88%'), findsOneWidget);
       expect(find.text('PITCH / ROLL'), findsOneWidget);
-      expect(find.text('DISARMED'), findsOneWidget);
       expect(find.text('ESTOP'), findsOneWidget);
-      expect(find.text('Altitude limited'), findsOneWidget);
+      expect(find.text('RTH'), findsOneWidget);
+      expect(find.text('Altitude limit'), findsOneWidget);
+      expect(find.text('GSPD'), findsOneWidget);
+      expect(find.text('VSPD'), findsOneWidget);
+      expect(find.text('ALT'), findsOneWidget);
+
+      // Tap RTH and ESTOP buttons
+      await tester.tap(find.text('RTH'));
+      await tester.pump();
+      await tester.tap(find.text('ESTOP'));
+      await tester.pump();
+
+      // Drag 3D center circle joystick (Pitch & Roll)
+      final joystickFinder = find.text('PITCH / ROLL');
+      expect(joystickFinder, findsOneWidget);
+      final joystickCenter = tester.getCenter(joystickFinder) + const Offset(0, 60);
+      await tester.dragFrom(joystickCenter, const Offset(0, -20)); // pitch forward
+      await tester.pump();
+      await tester.dragFrom(joystickCenter, const Offset(20, 0)); // roll right
+      await tester.pump();
     });
 
     testWidgets('TacticalCompassCard displays heading degree and cardinal direction', (WidgetTester tester) async {
