@@ -8,16 +8,31 @@ import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
 import 'tactical_compass_card.dart';
 
+enum MapLayerType {
+  satellite('SATELLITE', 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', Icons.satellite_alt_outlined),
+  street('STREET', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', Icons.map_outlined),
+  tactical('TACTICAL', 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', Icons.dark_mode_outlined);
+
+  final String label;
+  final String urlTemplate;
+  final IconData icon;
+  const MapLayerType(this.label, this.urlTemplate, this.icon);
+}
+
 class CameraViewfinderCard extends StatefulWidget {
   final bool isSwapped;
   final bool isDispActive;
   final VoidCallback? onToggleSwap;
+  final MapController? mapController;
+  final double? currentZoom;
 
   const CameraViewfinderCard({
     super.key,
     this.isSwapped = false,
     this.isDispActive = true,
     this.onToggleSwap,
+    this.mapController,
+    this.currentZoom,
   });
 
   @override
@@ -32,9 +47,11 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
   Timer? _recordTimer;
   double _levelValue = 0.5;
   String _levelUnit = 'KT';
+  MapLayerType _selectedMapLayer = MapLayerType.satellite;
 
   late AnimationController _animController;
   final MapController _primaryMapController = MapController();
+  MapController get _effectiveMapController => widget.mapController ?? _primaryMapController;
 
   @override
   void initState() {
@@ -75,7 +92,8 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           try {
-            _primaryMapController.move(currentPos, _primaryMapController.camera.zoom);
+            final z = widget.currentZoom ?? _effectiveMapController.camera.zoom;
+            _effectiveMapController.move(currentPos, z);
           } catch (_) {}
         }
       });
@@ -389,16 +407,20 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // 1. Full OpenStreetMap View (No Dark Shade)
+            // 1. Full OpenStreetMap View (Interactive with Hardware Knob, Pinch & Tap Zoom)
             FlutterMap(
-              mapController: _primaryMapController,
+              mapController: _effectiveMapController,
               options: MapOptions(
                 initialCenter: currentPos,
-                initialZoom: 15.0,
+                initialZoom: widget.currentZoom ?? 15.0,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all,
+                ),
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  key: ValueKey(_selectedMapLayer),
+                  urlTemplate: _selectedMapLayer.urlTemplate,
                   userAgentPackageName: 'com.rocketcontroller.gcs',
                 ),
                 MarkerLayer(
@@ -555,7 +577,96 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
               height: 145,
               child: TacticalCompassCard(isOverlay: true),
             ),
+
+            // 5. Functional 3-Way Map View Switcher (Satellite / Street / Tactical Dark) + GPS Center (B&W Minimalist)
+            Positioned(
+              left: 16,
+              bottom: 16,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.white24, width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 3 Map Layer Switch Buttons (Icon-only logos)
+                    ...MapLayerType.values.map((layer) {
+                      final isSelected = _selectedMapLayer == layer;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(4),
+                            onTap: () => setState(() => _selectedMapLayer = layer),
+                            child: Tooltip(
+                              message: layer.label,
+                              child: Container(
+                                padding: const EdgeInsets.all(5),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? Colors.white : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: isSelected ? Colors.white : Colors.white24,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: Icon(
+                                  layer.icon,
+                                  size: 15,
+                                  color: isSelected ? Colors.black : Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+
+                    // Center on GPS Drone button
+                    _buildMapIconButton(
+                      icon: Icons.my_location,
+                      tooltip: 'Center on Drone',
+                      onTap: () {
+                        try {
+                          _effectiveMapController.move(currentPos, _effectiveMapController.camera.zoom);
+                        } catch (_) {}
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(4),
+        onTap: onTap,
+        child: Tooltip(
+          message: tooltip,
+          child: Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.white24, width: 1),
+            ),
+            child: Icon(icon, color: Colors.white70, size: 15),
+          ),
         ),
       ),
     );

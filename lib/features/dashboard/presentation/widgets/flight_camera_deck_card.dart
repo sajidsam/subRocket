@@ -13,6 +13,7 @@ class FlightCameraDeckCard extends StatefulWidget {
   final bool isDispActive;
   final VoidCallback? onToggleDisp;
   final VoidCallback? onToggleSwap;
+  final ValueChanged<double>? onZoomChanged;
 
   const FlightCameraDeckCard({
     super.key,
@@ -20,6 +21,7 @@ class FlightCameraDeckCard extends StatefulWidget {
     this.isDispActive = true,
     this.onToggleDisp,
     this.onToggleSwap,
+    this.onZoomChanged,
   });
 
   @override
@@ -41,7 +43,7 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
   String _selectedMode = 'HDR';
 
   // Precision Rotary Knob Dial (Image 1 reference)
-  double _knobValue = 0.65;
+  double _knobValue = 0.0;
 
   final List<String> _frameLines = [
     '1920 : 1080',
@@ -277,26 +279,19 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ZOOM Rotary Dial Knob (2x Size: 100px on LEFT)
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Header offset matching AWB/DISP height (28 + 14) so circles align perfectly
-                      const SizedBox(height: 42),
-                      _RotaryKnobDial(
-                        value: _knobValue,
-                        size: const Size(100, 100),
-                        label: 'ZOOM',
-                        onChanged: (val) {
-                          setState(() => _knobValue = val);
-                          final targetZoom = 10.0 + val * 8.0;
-                          try {
-                            _miniMapController.move(_miniMapController.camera.center, targetZoom);
-                          } catch (_) {}
-                        },
-                      ),
-                    ],
+                  // ZOOM Rotary Dial Knob (with live percent readout on top matching AWB/DISP header)
+                  _RotaryKnobDial(
+                    value: _knobValue,
+                    size: const Size(100, 100),
+                    label: 'ZOOM',
+                    onChanged: (val) {
+                      setState(() => _knobValue = val);
+                      final targetZoom = 10.0 + val * 8.0;
+                      try {
+                        _miniMapController.move(_miniMapController.camera.center, targetZoom);
+                      } catch (_) {}
+                      widget.onZoomChanged?.call(targetZoom);
+                    },
                   ),
 
                   const SizedBox(width: 14),
@@ -875,6 +870,7 @@ class _MiniReticlePainter extends CustomPainter {
 }
 
 // Precision Hardware-style Rotary Knob Dial (2x Size reference)
+// Precision Hardware-style Rotary Knob Dial (2x Size reference)
 class _RotaryKnobDial extends StatelessWidget {
   final double value;
   final String label;
@@ -914,10 +910,35 @@ class _RotaryKnobDial extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final zoomPercent = (value.clamp(0.0, 1.0) * 100).round();
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // Top Header: Live Zoom Percent Readout (matching AWB/DISP 28px height)
+        Container(
+          width: size.width,
+          height: 28,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xFF22252C),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.white12, width: 1),
+          ),
+          child: Text(
+            'ZOOM $zoomPercent%',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10.5,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'monospace',
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onPanStart: (details) => _handleGesture(details.localPosition, size),
@@ -926,16 +947,6 @@ class _RotaryKnobDial extends StatelessWidget {
           child: CustomPaint(
             size: size,
             painter: _RotaryKnobPainter(value: value),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: GcsColors.textMuted,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
           ),
         ),
       ],
@@ -957,42 +968,8 @@ class _RotaryKnobPainter extends CustomPainter {
     const totalSweep = 270.0 * (pi / 180.0);
     final currentAngle = startAngle + totalSweep * value.clamp(0.0, 1.0);
 
-    // 1. Straight Radial Gauge Tick Marks around Knob (no outer circle or dot marks)
-    const int tickCount = 28;
-    final bezelRadius = radius - 10.5;
-    final innerTickRadius = bezelRadius + 2.5;
-    final outerTickRadius = innerTickRadius + 5.5;
-
-    for (int i = 0; i < tickCount; i++) {
-      final double t = i / (tickCount - 1);
-      final double angle = startAngle + t * totalSweep;
-      final bool isLit = t <= value;
-      final bool isMajor = (i % 5 == 0);
-
-      final p1 = center + Offset(cos(angle) * innerTickRadius, sin(angle) * innerTickRadius);
-      final p2 = center + Offset(
-        cos(angle) * (outerTickRadius + (isMajor ? 2.5 : 0.0)),
-        sin(angle) * (outerTickRadius + (isMajor ? 2.5 : 0.0)),
-      );
-
-      if (isLit) {
-        final glowPaint = Paint()
-          ..color = Colors.white.withValues(alpha: 0.35)
-          ..strokeWidth = isMajor ? 3.5 : 2.5
-          ..strokeCap = StrokeCap.round
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
-        canvas.drawLine(p1, p2, glowPaint);
-      }
-
-      final tickPaint = Paint()
-        ..color = isLit ? Colors.white : const Color(0xFF3F4655)
-        ..strokeWidth = isMajor ? 1.8 : 1.0
-        ..strokeCap = StrokeCap.round;
-
-      canvas.drawLine(p1, p2, tickPaint);
-    }
-
-    // 2. Outer Bezel / Collar of Rotary Knob
+    // 1. Outer Bezel / Collar of Rotary Knob
+    final bezelRadius = radius - 5.0;
     final bezelRect = Rect.fromCircle(center: center, radius: bezelRadius);
 
     // Drop shadow
@@ -1018,8 +995,8 @@ class _RotaryKnobPainter extends CustomPainter {
       ..strokeWidth = 1.2;
     canvas.drawCircle(center, bezelRadius, bezelBorderPaint);
 
-    // 3. Inner Rotary Knob Cap (Cylindrical Metallic Disc)
-    final capRadius = bezelRadius - 5.0;
+    // 2. Inner Rotary Knob Cap (Cylindrical Metallic Disc)
+    final capRadius = bezelRadius - 6.0;
     final capRect = Rect.fromCircle(center: center, radius: capRadius);
 
     final capPaint = Paint()
@@ -1042,8 +1019,8 @@ class _RotaryKnobPainter extends CustomPainter {
       ..strokeWidth = 1.0;
     canvas.drawCircle(center, capRadius, capBorderPaint);
 
-    // 4. Indicator Pip (Glowing White Dot on Knob)
-    final pipRadius = capRadius * 0.62;
+    // 3. Indicator Pip (Glowing White Dot on Knob starting from 0%)
+    final pipRadius = capRadius * 0.65;
     final pipPos = center + Offset(cos(currentAngle) * pipRadius, sin(currentAngle) * pipRadius);
 
     // Pip glow
@@ -1054,7 +1031,7 @@ class _RotaryKnobPainter extends CustomPainter {
 
     // Pip solid white dot
     final pipCorePaint = Paint()..color = Colors.white;
-    canvas.drawCircle(pipPos, 2.6, pipCorePaint);
+    canvas.drawCircle(pipPos, 2.8, pipCorePaint);
   }
 
   @override

@@ -351,19 +351,19 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
     }
   }
 
-  // 2x Bigger Monochrome Black & White Vertical Speed / Throttle Slider (utilizing vertical empty space)
+  // 2x Bigger Monochrome Black & White Vertical Speed / Throttle Slider (30px reduced height, wider modern handle)
   Widget _buildAerospaceSpeedSlider(MavlinkService mavlink, VehicleState vehicle) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final faderHeight = constraints.maxHeight.isFinite && constraints.maxHeight > 200
-            ? constraints.maxHeight
-            : 360.0;
-        const faderWidth = 110.0;
-        const knobHeight = 34.0;
-        const knobWidth = 54.0;
+        final faderHeight = (constraints.maxHeight.isFinite && constraints.maxHeight > 200
+            ? constraints.maxHeight - 30.0
+            : 330.0).clamp(220.0, 420.0);
+        const faderWidth = 126.0;
+        const knobHeight = 36.0;
+        const knobWidth = 64.0;
         const topMargin = 14.0;
         const bottomMargin = 14.0;
-        const trackCenterX = 52.0;
+        const trackCenterX = 56.0;
         final availableTravel = faderHeight - topMargin - bottomMargin - knobHeight;
 
         final ratio = (_throttlePercent / 100.0).clamp(0.0, 1.0);
@@ -419,39 +419,39 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
     );
   }
 
-  // Modern Ergonomic 3D Metallic Silver / White Fader Knob Handle
+  // Modern Ergonomic 3D Brushed Silver Fader Knob Handle (No glow, clean precision styling)
   Widget _buildAerospaceFaderKnob(double width, double height, Color statusColor) {
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(4),
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFFFFFFF), // pure bright top highlight
-            Color(0xFFE2E8F0), // brushed silver sheen
-            Color(0xFFCBD5E1), // metallic core
-            Color(0xFF94A3B8), // dark silver bottom bevel shadow
+            Color(0xFFFFFFFF), // pure crisp silver/white top sheen
+            Color(0xFFE5EBF4), // brushed satin silver
+            Color(0xFFCAD4E2), // metallic body
+            Color(0xFF98A6BA), // dark silver bottom edge
           ],
-          stops: [0.0, 0.25, 0.70, 1.0],
+          stops: [0.0, 0.28, 0.72, 1.0],
         ),
-        border: Border.all(color: Colors.white, width: 1.2),
-        boxShadow: [
+        border: Border.all(color: const Color(0xFFBAC7D8), width: 1.0),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.75),
-            blurRadius: 7,
-            offset: const Offset(0, 3),
+            color: Color(0x73000000),
+            blurRadius: 5,
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Left side tactile grip notches (dark contrast on silver)
+          // Left side crisp tactile grip ribs
           Positioned(
-            left: 3,
+            left: 3.5,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -462,9 +462,9 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
             ),
           ),
 
-          // Right side tactile grip notches (dark contrast on silver)
+          // Right side crisp tactile grip ribs
           Positioned(
-            right: 3,
+            right: 3.5,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -475,35 +475,29 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
             ),
           ),
 
-          // Center horizontal index groove line (dark contrast on silver)
+          // Center horizontal index groove line (precision dark graphite)
           Container(
-            width: width * 0.58,
-            height: 1.5,
+            width: width * 0.52,
+            height: 1.6,
             decoration: BoxDecoration(
               color: const Color(0xFF1E293B),
               borderRadius: BorderRadius.circular(1),
             ),
           ),
 
-          // Center Status LED Jewel Indicator (Yellow at 0%, Green when >0 & <80%, Red when >=80%)
+          // Center Status LED Jewel Indicator (No blur glow, clean modern bezel)
           Container(
-            width: 8.5,
-            height: 8.5,
+            width: 8.0,
+            height: 8.0,
             decoration: BoxDecoration(
               color: statusColor,
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFF0F172A), width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: statusColor.withValues(alpha: 0.65),
-                  blurRadius: 4.5,
-                ),
-              ],
             ),
             child: Center(
               child: Container(
-                width: 2.5,
-                height: 2.5,
+                width: 2.2,
+                height: 2.2,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,

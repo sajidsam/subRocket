@@ -37,6 +37,8 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final FocusNode _focusNode = FocusNode();
   final MapController _targetMapController = MapController();
+  final MapController _primaryMapController = MapController();
+  double _currentMapZoom = 15.0;
   int _selectedNavIndex = 0;
   bool _isMapPrimary = false;
   bool _isCameraDispActive = true;
@@ -217,6 +219,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: CameraViewfinderCard(
                   isSwapped: _isMapPrimary,
                   isDispActive: _isCameraDispActive,
+                  mapController: _primaryMapController,
+                  currentZoom: _currentMapZoom,
                   onToggleSwap: () => setState(() => _isMapPrimary = !_isMapPrimary),
                 ),
               ),
@@ -229,6 +233,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   isDispActive: _isCameraDispActive,
                   onToggleDisp: () => setState(() => _isCameraDispActive = !_isCameraDispActive),
                   onToggleSwap: () => setState(() => _isMapPrimary = !_isMapPrimary),
+                  onZoomChanged: (zoom) {
+                    _currentMapZoom = zoom;
+                    try {
+                      _primaryMapController.move(_primaryMapController.camera.center, zoom);
+                    } catch (_) {}
+                  },
                 ),
               ),
             ],

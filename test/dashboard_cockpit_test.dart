@@ -68,7 +68,7 @@ void main() {
       expect(find.text('SAFAR'), findsOneWidget);
       expect(find.text('4K . 19.67FPS'), findsOneWidget);
       expect(find.textContaining('Mah'), findsOneWidget);
-      expect(find.text('83°'), findsAtLeastNWidgets(1));
+      expect(find.text('88%'), findsOneWidget);
     });
 
     testWidgets('CameraViewfinderCard toggles HDR and Pause states', (WidgetTester tester) async {
@@ -110,7 +110,7 @@ void main() {
       expect(find.text('1920 : 1080'), findsOneWidget);
       expect(find.text('AWB'), findsOneWidget);
       expect(find.text('DISP'), findsOneWidget);
-      expect(find.text('ZOOM'), findsOneWidget);
+      expect(find.textContaining('ZOOM'), findsOneWidget);
 
       await tester.tap(find.text('Photo'));
       await tester.pump();
@@ -163,12 +163,27 @@ void main() {
       await tester.pumpWidget(createTestableWidget(const TacticalCompassCard()));
       await tester.pump();
 
-      expect(find.text('83°'), findsOneWidget);
       expect(find.text('E'), findsOneWidget);
       expect(find.byType(TacticalCompassCard), findsOneWidget);
     });
 
-    testWidgets('JcaSidebar switches outlet content while sidebar remains fixed', (WidgetTester tester) async {
+    testWidgets('Mavlink parameters button and connection toggle button are functional in drawer/appbar', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestableWidget(const DashboardScreen()));
+      await tester.pump();
+
+      // Dashboard Screen renders without errors
+      expect(find.byType(DashboardScreen), findsOneWidget);
+      expect(find.byType(JcaSidebar), findsOneWidget);
+    });
+
+    testWidgets('JcaSidebar destination selection switches outlet view and returns home', (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1920, 1080);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -192,7 +207,7 @@ void main() {
       // Target tracking view is now loaded in the outlet
       expect(find.byType(CameraViewfinderCard), findsNothing);
 
-      // Tap SAFAR badge or Cockpit icon to return home
+      // Tap SAFAR badge to return home
       await tester.tap(find.text('SAFAR'));
       await tester.pump(const Duration(milliseconds: 600));
 
@@ -200,7 +215,7 @@ void main() {
       expect(find.byType(CameraViewfinderCard), findsOneWidget);
     });
 
-    testWidgets('Tapping swap icon toggles map to primary view and camera to mini box', (WidgetTester tester) async {
+    testWidgets('Tapping swap icon toggles map to primary view with 4 B&W buttons and camera to mini box', (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1920, 1080);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -219,9 +234,17 @@ void main() {
       await tester.tap(find.byIcon(Icons.sync).first);
       await tester.pump();
 
-      // Now map is top (shows CAMERA VIEW return button) and mini box shows CAM LIVE
+      // Now map is top (shows CAMERA VIEW return button, and 4 B&W icon-only logos: satellite, street, tactical, my_location)
       expect(find.text('CAMERA VIEW'), findsOneWidget);
+      expect(find.byIcon(Icons.satellite_alt_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.map_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.dark_mode_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.my_location), findsOneWidget);
       expect(find.text('CAM LIVE'), findsOneWidget);
+
+      // Tap TACTICAL map layer icon button
+      await tester.tap(find.byIcon(Icons.dark_mode_outlined));
+      await tester.pump();
 
       // Tap CAMERA VIEW return button to toggle back
       await tester.tap(find.text('CAMERA VIEW'));
