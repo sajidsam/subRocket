@@ -84,14 +84,19 @@ void main() {
       expect(find.text('HDR'), findsOneWidget);
     });
 
-    testWidgets('FlightCameraDeckCard toggles video/photo and resolution lines', (WidgetTester tester) async {
+    testWidgets('FlightCameraDeckCard toggles video/photo, resolution lines, and quick camera controls', (WidgetTester tester) async {
       await tester.pumpWidget(createTestableWidget(const FlightCameraDeckCard()));
       await tester.pump();
 
       expect(find.text('Video'), findsOneWidget);
       expect(find.text('Photo'), findsOneWidget);
+      expect(find.text('Resolution px'), findsOneWidget);
+      expect(find.text('HDR'), findsOneWidget);
       expect(find.text('1280 : 720'), findsOneWidget);
       expect(find.text('1920 : 1080'), findsOneWidget);
+      expect(find.text('AWB'), findsOneWidget);
+      expect(find.text('DISP'), findsOneWidget);
+      expect(find.text('RIGHT'), findsOneWidget);
 
       await tester.tap(find.text('Photo'));
       await tester.pump();
@@ -100,14 +105,16 @@ void main() {
       await tester.pump();
     });
 
-    testWidgets('DroneStatusCard displays battery and responds to sliders', (WidgetTester tester) async {
+    testWidgets('DroneStatusCard displays battery, flight control deck, and responds to sliders', (WidgetTester tester) async {
       await tester.pumpWidget(createTestableWidget(const DroneStatusCard()));
       await tester.pump();
 
       expect(find.text('Battery'), findsOneWidget);
+      expect(find.text('THR: 50%'), findsOneWidget);
+      expect(find.text('PITCH / ROLL'), findsOneWidget);
+      expect(find.text('DISARMED'), findsOneWidget);
+      expect(find.text('ESTOP'), findsOneWidget);
       expect(find.text('Altitude limited'), findsOneWidget);
-      expect(find.text('Resolution px'), findsOneWidget);
-      expect(find.text('HDR'), findsOneWidget);
     });
 
     testWidgets('TacticalCompassCard displays heading degree and cardinal direction', (WidgetTester tester) async {

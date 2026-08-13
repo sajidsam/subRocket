@@ -233,24 +233,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         const SizedBox(width: 8),
 
-        // Right Zone: Drone Status Card (Top) + Tactical Compass (Bottom)
-        Expanded(
+        // Right Zone: Drone Status Card (Full Height)
+        const Expanded(
           flex: 34,
-          child: Column(
-            children: const [
-              // Zone C1: Drone Status Card (aligned exactly with Zone A Camera Feed height)
-              Expanded(
-                flex: 58,
-                child: DroneStatusCard(),
-              ),
-              SizedBox(height: 8),
-              // Zone C2: Tactical Compass Card (aligned exactly with Zone B Flight Deck height)
-              Expanded(
-                flex: 42,
-                child: TacticalCompassCard(),
-              ),
-            ],
-          ),
+          child: DroneStatusCard(),
         ),
       ],
     );
