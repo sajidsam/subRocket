@@ -6,6 +6,8 @@ import 'package:latlong2/latlong.dart' hide Path;
 import 'package:provider/provider.dart';
 import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
+import 'ip_camera_setup_dialog.dart';
+import 'ip_webcam_stream_view.dart';
 import 'tactical_compass_card.dart';
 
 enum MapLayerType {
@@ -111,10 +113,15 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // 1. Realistic Mountain Landscape Camera Feed Background
-            CustomPaint(
-              painter: MountainLandscapePainter(animation: _animController),
-            ),
+            // 1. Live Camera Feed (IP Webcam / MJPEG) or Realistic Mountain Landscape Simulation
+            if (vehicle.isUsingSimulatedCamera)
+              CustomPaint(
+                painter: MountainLandscapePainter(animation: _animController),
+              )
+            else
+              IpWebcamStreamView(
+                streamUrl: vehicle.cameraStreamUrl,
+              ),
 
             // 2. Center Artificial Horizon / Reticle (Navigation stays always visible)
             Center(

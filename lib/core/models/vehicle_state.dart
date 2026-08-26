@@ -44,6 +44,13 @@ class VehicleState extends ChangeNotifier {
   int pingMs = 5;
   double bytesPerSec = 0.0;
 
+  // Camera & Video Link
+  bool isCameraStreamConnected = false;
+  String cameraStreamUrl = 'http://192.168.0.105:8080/video';
+  bool isUsingSimulatedCamera = true;
+  double cameraFps = 0.0;
+  String cameraStatusText = 'Procedural Simulation';
+
   // Arm & Flight Mode
   bool isArmed = false;
   FlightMode mode = FlightMode.stabilize;
@@ -177,6 +184,30 @@ class VehicleState extends ChangeNotifier {
 
   void setThrottle(int percent) {
     throttlePercent = percent.clamp(0, 100);
+    notifyListeners();
+  }
+
+  void updateCameraStream({
+    required String url,
+    required bool useSimulated,
+    bool isConnected = false,
+    String? status,
+  }) {
+    cameraStreamUrl = url;
+    isUsingSimulatedCamera = useSimulated;
+    isCameraStreamConnected = isConnected;
+    if (status != null) cameraStatusText = status;
+    notifyListeners();
+  }
+
+  void setCameraFps(double fps) {
+    cameraFps = fps;
+    notifyListeners();
+  }
+
+  void setCameraStatus(String status, {bool? isConnected}) {
+    cameraStatusText = status;
+    if (isConnected != null) isCameraStreamConnected = isConnected;
     notifyListeners();
   }
 }

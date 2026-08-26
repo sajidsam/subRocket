@@ -58,18 +58,35 @@ class _PidTuningPanelState extends State<PidTuningPanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('ATTITUDE PID GAINS TUNING', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: GcsColors.cyanAccent, fontFamily: 'monospace')),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: GcsColors.aviationBlue.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: GcsColors.cyanAccent.withValues(alpha: 0.5)),
+                        ),
+                        child: const Icon(Icons.tune, color: GcsColors.cyanAccent, size: 18),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'ATTITUDE PID GAINS TUNING',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'monospace', letterSpacing: 1.0),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
 
                   _buildAxisGroup('ROLL RATE PID (ATC_RAT_RLL)', _rollP, _rollI, _rollD, (p, i, d) {
                     setState(() { _rollP = p; _rollI = i; _rollD = d; });
                   }),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   _buildAxisGroup('PITCH RATE PID (ATC_RAT_PIT)', _pitchP, _pitchI, _pitchD, (p, i, d) {
                     setState(() { _pitchP = p; _pitchI = i; _pitchD = d; });
                   }),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   _buildAxisGroup('YAW RATE PID (ATC_RAT_YAW)', _yawP, _yawI, _yawD, (p, i, d) {
                     setState(() { _yawP = p; _yawI = i; _yawD = d; });
@@ -79,7 +96,7 @@ class _PidTuningPanelState extends State<PidTuningPanel> {
             ),
           ),
 
-          const SizedBox(width: 20),
+          const SizedBox(width: 16),
 
           // Right: Real-time Step Response Simulation Curve
           Expanded(
@@ -87,30 +104,43 @@ class _PidTuningPanelState extends State<PidTuningPanel> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: GcsColors.surfaceCard,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: GcsColors.border),
+                color: GcsColors.surfaceDark,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: GcsColors.border, width: 1.5),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('STEP-RESPONSE SIMULATION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'monospace', color: GcsColors.greenActive)),
-                  const SizedBox(height: 6),
-                  const Text('Roll Attitude Dynamic Response (1.0 = target)', style: TextStyle(fontSize: 11, color: Colors.white60)),
-                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('STEP-RESPONSE SIMULATION', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'monospace', color: GcsColors.greenActive, letterSpacing: 0.8)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: GcsColors.greenActive.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('LIVE', style: TextStyle(color: GcsColors.greenActive, fontSize: 9, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text('Roll Attitude Dynamic Response (1.0 = target)', style: TextStyle(fontSize: 11, color: GcsColors.textSecondary)),
+                  const SizedBox(height: 14),
                   Expanded(
                     child: LineChart(
                       LineChartData(
                         gridData: FlGridData(
                           show: true,
-                          getDrawingHorizontalLine: (v) => const FlLine(color: Colors.white12, strokeWidth: 1),
-                          getDrawingVerticalLine: (v) => const FlLine(color: Colors.white12, strokeWidth: 1),
+                          getDrawingHorizontalLine: (v) => const FlLine(color: Color(0x1FFFFFFF), strokeWidth: 1),
+                          getDrawingVerticalLine: (v) => const FlLine(color: Color(0x1FFFFFFF), strokeWidth: 1),
                         ),
                         titlesData: const FlTitlesData(
                           rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                           topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         ),
-                        borderData: FlBorderData(show: true, border: Border.all(color: Colors.white24)),
+                        borderData: FlBorderData(show: false),
                         minY: 0,
                         maxY: 1.5,
                         lineBarsData: [
@@ -118,14 +148,18 @@ class _PidTuningPanelState extends State<PidTuningPanel> {
                             spots: _generateStepResponse(_rollP, _rollI, _rollD),
                             isCurved: true,
                             color: GcsColors.cyanAccent,
-                            barWidth: 3,
+                            barWidth: 2.5,
                             dotData: const FlDotData(show: false),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              color: GcsColors.cyanAccent.withValues(alpha: 0.15),
+                            ),
                           ),
                           // Target line at 1.0
                           LineChartBarData(
                             spots: const [FlSpot(0, 1.0), FlSpot(1.0, 1.0)],
                             isCurved: false,
-                            color: Colors.white38,
+                            color: GcsColors.goldAccent.withValues(alpha: 0.6),
                             dashArray: [5, 5],
                             barWidth: 1.5,
                             dotData: const FlDotData(show: false),
@@ -147,15 +181,15 @@ class _PidTuningPanelState extends State<PidTuningPanel> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: GcsColors.surfaceCard,
-        borderRadius: BorderRadius.circular(8),
+        color: GcsColors.surfaceDark,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: GcsColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white, fontFamily: 'monospace')),
-          const SizedBox(height: 8),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white, fontFamily: 'monospace', letterSpacing: 0.8)),
+          const SizedBox(height: 6),
           _buildSliderRow('P Gain', p, 0.01, 0.5, (v) => onChanged(v, i, d)),
           _buildSliderRow('I Gain', i, 0.01, 0.4, (v) => onChanged(p, v, d)),
           _buildSliderRow('D Gain', d, 0.000, 0.02, (v) => onChanged(p, i, v)),
@@ -165,20 +199,23 @@ class _PidTuningPanelState extends State<PidTuningPanel> {
   }
 
   Widget _buildSliderRow(String label, double val, double min, double max, ValueChanged<double> onVal) {
-    return Row(
-      children: [
-        SizedBox(width: 60, child: Text(label, style: const TextStyle(fontSize: 11, color: Colors.white70, fontFamily: 'monospace'))),
-        Expanded(
-          child: Slider(
-            value: val.clamp(min, max),
-            min: min,
-            max: max,
-            activeColor: GcsColors.cyanAccent,
-            onChanged: onVal,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
+        children: [
+          SizedBox(width: 55, child: Text(label, style: const TextStyle(fontSize: 10, color: GcsColors.textSecondary, fontFamily: 'monospace'))),
+          Expanded(
+            child: Slider(
+              value: val.clamp(min, max),
+              min: min,
+              max: max,
+              activeColor: GcsColors.cyanAccent,
+              onChanged: onVal,
+            ),
           ),
-        ),
-        SizedBox(width: 60, child: Text(val.toStringAsFixed(4), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: GcsColors.techAmber, fontFamily: 'monospace'))),
-      ],
+          SizedBox(width: 65, child: Text(val.toStringAsFixed(4), textAlign: TextAlign.right, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: GcsColors.goldAccent, fontFamily: 'monospace'))),
+        ],
+      ),
     );
   }
 }

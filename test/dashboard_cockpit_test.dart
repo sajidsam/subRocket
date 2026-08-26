@@ -12,6 +12,7 @@ import 'package:rocket_controller/features/dashboard/presentation/widgets/drone_
 import 'package:rocket_controller/features/dashboard/presentation/widgets/flight_camera_deck_card.dart';
 import 'package:rocket_controller/features/dashboard/presentation/widgets/jca_sidebar.dart';
 import 'package:rocket_controller/features/dashboard/presentation/widgets/tactical_compass_card.dart';
+import 'package:rocket_controller/features/datalink/presentation/screens/connection_screen.dart';
 
 void main() {
   group('Dashboard Cockpit UI Tests', () {
@@ -253,5 +254,43 @@ void main() {
       // Swapped back: 4K . 19.67FPS is visible again
       expect(find.text('4K . 19.67FPS'), findsOneWidget);
     });
+
+    testWidgets('ConnectionScreen IP Camera tab connects and disconnects feed smoothly', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestableWidget(const ConnectionScreen()));
+      await tester.pump();
+
+      // Switch to IP Camera Link tab
+      expect(find.text('IP Camera Link'), findsOneWidget);
+      await tester.tap(find.text('IP Camera Link'));
+      await tester.pump();
+
+      // Verify connect button is shown
+      expect(find.text('CONNECT CAMERA FEED'), findsOneWidget);
+
+      // Tap CONNECT CAMERA FEED
+      await tester.tap(find.text('CONNECT CAMERA FEED'));
+      await tester.pump();
+
+      // Vehicle state is now in streaming mode and DISCONNECT CAMERA button is visible
+      expect(vehicleState.isUsingSimulatedCamera, isFalse);
+      expect(find.text('DISCONNECT CAMERA'), findsOneWidget);
+
+      // Tap DISCONNECT CAMERA
+      await tester.tap(find.text('DISCONNECT CAMERA'));
+      await tester.pump();
+
+      // Reverted to simulated static picture
+      expect(vehicleState.isUsingSimulatedCamera, isTrue);
+      expect(find.text('CONNECT CAMERA FEED'), findsOneWidget);
+    });
   });
 }
+
+

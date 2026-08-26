@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:provider/provider.dart';
-import '../../../../core/models/flight_mode.dart';
 import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
 import '../../../../core/presentation/widgets/emergency_panel.dart';
@@ -14,7 +13,6 @@ import '../../../../core/presentation/widgets/hud_pfd.dart';
 import '../../../../core/presentation/widgets/telemetry_strip.dart';
 import '../../../../core/services/flight_logger_service.dart';
 import '../../../../core/services/mavlink_service.dart';
-import '../../../calibration/presentation/screens/calibration_screen.dart';
 import '../../../datalink/presentation/screens/connection_screen.dart';
 import '../../../flight_logs/presentation/screens/flight_logs_screen.dart';
 import '../../../mission_planner/presentation/screens/mission_planner_screen.dart';
@@ -23,9 +21,7 @@ import '../widgets/camera_viewfinder_card.dart';
 import '../widgets/drone_status_card.dart';
 import '../widgets/flight_camera_deck_card.dart';
 import '../widgets/jca_sidebar.dart';
-import '../widgets/live_graph_widget.dart';
 import '../widgets/quick_control_pad.dart';
-import '../widgets/tactical_compass_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -462,7 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(title, style: const TextStyle(color: Colors.white70, fontSize: 11)),
               Switch(
                 value: initial,
-                activeColor: GcsColors.aviationBlue,
+                activeThumbColor: GcsColors.aviationBlue,
                 onChanged: (val) => setState(() => initial = val),
               ),
             ],
@@ -527,7 +523,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   )
                 : ListView.separated(
                     itemCount: vehicle.messageLog.length,
-                    separatorBuilder: (_, __) => const Divider(color: GcsColors.borderSubtle, height: 1),
+                    separatorBuilder: (_, _) => const Divider(color: GcsColors.borderSubtle, height: 1),
                     itemBuilder: (context, index) {
                       final msg = vehicle.messageLog[index];
                       Color badgeColor;
@@ -542,7 +538,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           badgeColor = GcsColors.goldAccent;
                           break;
                         case SeverityLevel.info:
-                        default:
                           badgeColor = GcsColors.aviationBlue;
                           break;
                       }

@@ -28,16 +28,30 @@ class _RadioChannelsViewState extends State<RadioChannelsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'RADIO / RC TRANSMITTER CALIBRATION & MONITOR',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: GcsColors.cyanAccent, fontFamily: 'monospace'),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: GcsColors.aviationBlue.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: GcsColors.cyanAccent.withValues(alpha: 0.5)),
+                ),
+                child: const Icon(Icons.settings_input_antenna, color: GcsColors.cyanAccent, size: 18),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'RADIO / RC TRANSMITTER MONITOR',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'monospace', letterSpacing: 1.0),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           const Text(
             'Live PWM pulse widths (1000µs to 2000µs) mapped to standard 8-channel RC transmitter sticks and switches.',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+            style: TextStyle(color: GcsColors.textSecondary, fontSize: 12),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           Expanded(
             child: ListView.builder(
@@ -47,20 +61,20 @@ class _RadioChannelsViewState extends State<RadioChannelsView> {
                 final fraction = ((pwm - 1000) / 1000.0).clamp(0.0, 1.0);
 
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
+                  margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: GcsColors.surfaceCard,
-                    borderRadius: BorderRadius.circular(8),
+                    color: GcsColors.surfaceDark,
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: GcsColors.border),
                   ),
                   child: Row(
                     children: [
                       SizedBox(
-                        width: 220,
+                        width: 210,
                         child: Text(
                           _channelNames[index],
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'monospace'),
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'monospace'),
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -69,8 +83,8 @@ class _RadioChannelsViewState extends State<RadioChannelsView> {
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
                             value: fraction,
-                            minHeight: 16,
-                            backgroundColor: Colors.white12,
+                            minHeight: 14,
+                            backgroundColor: GcsColors.surfaceCard,
                             color: index == 2 ? GcsColors.greenActive : GcsColors.cyanAccent,
                           ),
                         ),
@@ -81,7 +95,7 @@ class _RadioChannelsViewState extends State<RadioChannelsView> {
                         child: Text(
                           '$pwm µs',
                           textAlign: TextAlign.right,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: GcsColors.techAmber, fontFamily: 'monospace'),
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: GcsColors.goldAccent, fontFamily: 'monospace'),
                         ),
                       ),
                     ],

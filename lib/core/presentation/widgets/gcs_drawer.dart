@@ -16,52 +16,107 @@ class GcsDrawer extends StatelessWidget {
     final vehicle = context.watch<VehicleState>();
 
     return Drawer(
-      backgroundColor: GcsColors.surfaceDark,
+      backgroundColor: GcsColors.cardBackground,
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
             decoration: const BoxDecoration(
-              color: GcsColors.surfaceCard,
-              border: Border(bottom: BorderSide(color: GcsColors.border, width: 2)),
+              color: GcsColors.surfaceDark,
+              border: Border(bottom: BorderSide(color: GcsColors.border, width: 1.5)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.rocket_launch, color: GcsColors.cyanAccent, size: 36),
-                    SizedBox(width: 10),
-                    Text(
-                      'ROCKET GCS',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
                 Row(
                   children: [
                     Container(
-                      width: 8,
-                      height: 8,
+                      width: 42,
+                      height: 42,
                       decoration: BoxDecoration(
-                        color: vehicle.isConnected ? GcsColors.greenActive : GcsColors.alertRed,
-                        shape: BoxShape.circle,
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: GcsColors.goldAccent, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: GcsColors.goldAccent.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'SAFAR',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 10,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${vehicle.connectionType} | ArduPilot v4.5',
-                      style: const TextStyle(color: Colors.white60, fontSize: 11, fontFamily: 'monospace'),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'ROCKET GCS',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                        Text(
+                          'AUTONOMOUS FLIGHT SUITE',
+                          style: TextStyle(
+                            color: GcsColors.goldAccent,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ],
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: GcsColors.surfaceCard,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: GcsColors.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: vehicle.isConnected ? GcsColors.greenActive : GcsColors.alertRed,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: (vehicle.isConnected ? GcsColors.greenActive : GcsColors.alertRed).withValues(alpha: 0.6),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${vehicle.connectionType} | ArduPilot v4.5',
+                        style: const TextStyle(color: GcsColors.textSecondary, fontSize: 10, fontFamily: 'monospace'),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -69,7 +124,7 @@ class GcsDrawer extends StatelessWidget {
           _buildNavItem(
             context,
             icon: Icons.dashboard,
-            title: 'Live Flight Dashboard',
+            title: 'Live Flight Cockpit',
             color: GcsColors.cyanAccent,
             onTap: () {
               Navigator.pop(context);
@@ -78,9 +133,9 @@ class GcsDrawer extends StatelessWidget {
           ),
           _buildNavItem(
             context,
-            icon: Icons.map,
+            icon: Icons.map_outlined,
             title: 'Mission Planner & Nav',
-            color: GcsColors.skyBlue,
+            color: GcsColors.goldAccent,
             onTap: () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const MissionPlannerScreen()));
@@ -90,7 +145,7 @@ class GcsDrawer extends StatelessWidget {
             context,
             icon: Icons.tune,
             title: 'Hardware Calibration & Tuning',
-            color: GcsColors.techAmber,
+            color: GcsColors.cyanAccent,
             onTap: () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const CalibrationScreen()));
@@ -98,7 +153,7 @@ class GcsDrawer extends StatelessWidget {
           ),
           _buildNavItem(
             context,
-            icon: Icons.settings_suggest,
+            icon: Icons.settings_suggest_outlined,
             title: 'Flight Parameters Tree',
             color: GcsColors.greenActive,
             onTap: () {
@@ -108,9 +163,9 @@ class GcsDrawer extends StatelessWidget {
           ),
           _buildNavItem(
             context,
-            icon: Icons.analytics,
+            icon: Icons.analytics_outlined,
             title: 'Blackbox Flight Logs',
-            color: Colors.purpleAccent,
+            color: GcsColors.goldAccent,
             onTap: () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const FlightLogsScreen()));
@@ -120,7 +175,7 @@ class GcsDrawer extends StatelessWidget {
             context,
             icon: Icons.cable,
             title: 'Datalink & MAVLink Console',
-            color: GcsColors.warningOrange,
+            color: GcsColors.cyanAccent,
             onTap: () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const ConnectionScreen()));
@@ -138,14 +193,23 @@ class GcsDrawer extends StatelessWidget {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: color, size: 22),
-      title: Text(
-        title,
-        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'monospace'),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
       ),
-      trailing: const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
-      onTap: onTap,
+      child: ListTile(
+        dense: true,
+        leading: Icon(icon, color: color, size: 20),
+        title: Text(
+          title,
+          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white24, size: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        hoverColor: GcsColors.surfaceCard,
+        onTap: onTap,
+      ),
     );
   }
 }

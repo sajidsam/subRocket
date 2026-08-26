@@ -14,10 +14,10 @@ class EmergencyActionPanel extends StatelessWidget {
     final vehicle = context.watch<VehicleState>();
 
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: GcsColors.surfaceDark.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: GcsColors.border, width: 1.5),
       ),
       child: Row(
@@ -29,9 +29,10 @@ class EmergencyActionPanel extends StatelessWidget {
               backgroundColor: GcsColors.greenActive,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             ),
-            icon: const Icon(Icons.flight_takeoff, size: 16),
-            label: const Text('TAKEOFF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.flight_takeoff, size: 15),
+            label: const Text('TAKEOFF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
             onPressed: () {
               if (!vehicle.isArmed) {
                 mavlink.armDisarm(true);
@@ -46,12 +47,13 @@ class EmergencyActionPanel extends StatelessWidget {
           // RTL Button
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: GcsColors.warningOrange,
+              backgroundColor: GcsColors.goldAccent,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             ),
-            icon: const Icon(Icons.home, size: 16),
-            label: const Text('RTL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.home, size: 15),
+            label: const Text('RTL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
             onPressed: () => mavlink.setFlightMode(FlightMode.rtl),
           ),
           const SizedBox(width: 6),
@@ -59,12 +61,13 @@ class EmergencyActionPanel extends StatelessWidget {
           // Land Button
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: GcsColors.skyBlue,
+              backgroundColor: GcsColors.cyanAccent,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             ),
-            icon: const Icon(Icons.flight_land, size: 16),
-            label: const Text('LAND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.flight_land, size: 15),
+            label: const Text('LAND', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
             onPressed: () => mavlink.setFlightMode(FlightMode.land),
           ),
           const SizedBox(width: 6),
@@ -74,10 +77,12 @@ class EmergencyActionPanel extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: GcsColors.surfaceCard,
               foregroundColor: Colors.white,
+              side: const BorderSide(color: GcsColors.border),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             ),
-            icon: const Icon(Icons.pause, size: 16),
-            label: const Text('HOLD', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.pause, size: 15),
+            label: const Text('HOLD', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
             onPressed: () => mavlink.setFlightMode(FlightMode.loiter),
           ),
           const SizedBox(width: 8),
@@ -88,9 +93,10 @@ class EmergencyActionPanel extends StatelessWidget {
               backgroundColor: GcsColors.alertRed,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             ),
-            icon: const Icon(Icons.dangerous, size: 16),
-            label: const Text('MOTOR KILL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+            icon: const Icon(Icons.dangerous, size: 15),
+            label: const Text('MOTOR KILL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2, fontFamily: 'monospace')),
             onPressed: () => mavlink.emergencyStop(),
           ),
         ],

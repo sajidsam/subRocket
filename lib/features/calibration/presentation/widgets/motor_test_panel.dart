@@ -20,23 +20,49 @@ class _MotorTestPanelState extends State<MotorTestPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'ESC & MOTOR TEST BENCH',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: GcsColors.cyanAccent, fontFamily: 'monospace'),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: GcsColors.aviationBlue.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: GcsColors.cyanAccent.withValues(alpha: 0.5)),
+                ),
+                child: const Icon(Icons.rotate_right, color: GcsColors.cyanAccent, size: 18),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'ESC & MOTOR TEST BENCH',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'monospace', letterSpacing: 1.0),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: GcsColors.alertRed.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: GcsColors.alertRed.withValues(alpha: 0.5)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.warning_amber_rounded, color: GcsColors.alertRed, size: 14),
+                    SizedBox(width: 4),
+                    Text('PROPS REMOVAL REQUIRED', style: TextStyle(color: GcsColors.alertRed, fontSize: 10, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'WARNING: Remove all propellers before testing motors to prevent accidental injury.',
-            style: TextStyle(color: GcsColors.alertRed, fontSize: 12, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // Safety Interlock Switch Card
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: GcsColors.surfaceCard,
-              borderRadius: BorderRadius.circular(8),
+              color: GcsColors.surfaceDark,
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: _safetyUnlocked ? GcsColors.alertRed : GcsColors.border, width: 1.5),
             ),
             child: Row(
@@ -44,18 +70,26 @@ class _MotorTestPanelState extends State<MotorTestPanel> {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      _safetyUnlocked ? Icons.lock_open : Icons.lock,
-                      color: _safetyUnlocked ? GcsColors.alertRed : Colors.white60,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _safetyUnlocked ? GcsColors.alertRed.withValues(alpha: 0.2) : GcsColors.surfaceCard,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        _safetyUnlocked ? Icons.lock_open : Icons.lock,
+                        color: _safetyUnlocked ? GcsColors.alertRed : GcsColors.textSecondary,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('SAFETY INTERLOCK SWITCH', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace')),
+                        const Text('SAFETY INTERLOCK SWITCH', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 12, color: Colors.white)),
                         Text(
-                          _safetyUnlocked ? 'ARMED FOR MOTOR TEST' : 'LOCKED (PROPS REMOVED CONFIRMATION REQUIRED)',
-                          style: TextStyle(color: _safetyUnlocked ? GcsColors.alertRed : Colors.white54, fontSize: 11),
+                          _safetyUnlocked ? 'ARMED FOR MOTOR TEST' : 'LOCKED (CONFIRM PROPELLERS ARE DETACHED)',
+                          style: TextStyle(color: _safetyUnlocked ? GcsColors.alertRed : GcsColors.textSecondary, fontSize: 11),
                         ),
                       ],
                     ),
@@ -70,27 +104,36 @@ class _MotorTestPanelState extends State<MotorTestPanel> {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Throttle Percent Slider
-          Row(
-            children: [
-              const Text('TEST THROTTLE: ', style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold)),
-              Text('${_testThrottle.toInt()}%', style: const TextStyle(color: GcsColors.techAmber, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
-              Expanded(
-                child: Slider(
-                  value: _testThrottle,
-                  min: 5.0,
-                  max: 50.0,
-                  divisions: 9,
-                  activeColor: GcsColors.techAmber,
-                  onChanged: _safetyUnlocked ? (v) => setState(() => _testThrottle = v) : null,
+          // Throttle Percent Slider Card
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: GcsColors.surfaceDark,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: GcsColors.border),
+            ),
+            child: Row(
+              children: [
+                const Text('TEST THROTTLE: ', style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white)),
+                Text('${_testThrottle.toInt()}%', style: const TextStyle(color: GcsColors.goldAccent, fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 12)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Slider(
+                    value: _testThrottle,
+                    min: 5.0,
+                    max: 50.0,
+                    divisions: 9,
+                    activeColor: GcsColors.goldAccent,
+                    onChanged: _safetyUnlocked ? (v) => setState(() => _testThrottle = v) : null,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // 8 Motors Grid
           Expanded(
@@ -98,8 +141,8 @@ class _MotorTestPanelState extends State<MotorTestPanel> {
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4,
                 childAspectRatio: 2.2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
               ),
               itemCount: 8,
               itemBuilder: (context, index) {
@@ -108,12 +151,13 @@ class _MotorTestPanelState extends State<MotorTestPanel> {
 
                 return ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isSpinning ? GcsColors.greenActive : GcsColors.surfaceCard,
+                    backgroundColor: isSpinning ? GcsColors.greenActive : GcsColors.surfaceDark,
                     foregroundColor: isSpinning ? Colors.black : Colors.white,
                     side: BorderSide(color: isSpinning ? GcsColors.greenActive : GcsColors.border),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  icon: Icon(Icons.rotate_right, color: isSpinning ? Colors.black : GcsColors.cyanAccent),
-                  label: Text('MOTOR $motorNum (${isSpinning ? "SPIN" : "TEST"})'),
+                  icon: Icon(Icons.rotate_right, color: isSpinning ? Colors.black : GcsColors.cyanAccent, size: 18),
+                  label: Text('MOTOR $motorNum (${isSpinning ? "SPIN" : "TEST"})', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                   onPressed: !_safetyUnlocked
                       ? null
                       : () async {

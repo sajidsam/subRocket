@@ -48,74 +48,115 @@ class _AccelCalibrationWizardState extends State<AccelCalibrationWizard> {
   Widget build(BuildContext context) {
     final step = _steps[_currentStep];
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '3D ACCELEROMETER / IMU CALIBRATION',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: GcsColors.cyanAccent, fontFamily: 'monospace'),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: GcsColors.aviationBlue.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: GcsColors.cyanAccent.withValues(alpha: 0.5)),
+                ),
+                child: const Icon(Icons.screen_rotation, color: GcsColors.cyanAccent, size: 18),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                '3D ACCELEROMETER / IMU CALIBRATION',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'monospace', letterSpacing: 1.0),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           const Text(
             'Calibrate the internal IMU accelerometers across all 6 geometric axes for precise attitude estimation.',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+            style: TextStyle(color: GcsColors.textSecondary, fontSize: 12),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Steps Progress Row
-          Row(
-            children: List.generate(_steps.length, (index) {
-              final isDone = index < _currentStep;
-              final isCurrent = index == _currentStep;
-              return Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: isDone ? GcsColors.greenActive : (isCurrent ? GcsColors.techAmber : Colors.white24),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: GcsColors.surfaceDark,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: GcsColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('CALIBRATION PROGRESS: STEP ${_currentStep + 1} OF ${_steps.length}', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 11, color: Colors.white)),
+                    Text('${((_currentStep / _steps.length) * 100).toInt()}%', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 11, color: GcsColors.goldAccent)),
+                  ],
                 ),
-              );
-            }),
+                const SizedBox(height: 8),
+                Row(
+                  children: List.generate(_steps.length, (index) {
+                    final isDone = index < _currentStep;
+                    final isCurrent = index == _currentStep;
+                    return Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: isDone ? GcsColors.greenActive : (isCurrent ? GcsColors.goldAccent : GcsColors.surfaceCard),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Active Calibration Card
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: GcsColors.surfaceCard,
-              borderRadius: BorderRadius.circular(10),
+              color: GcsColors.surfaceDark,
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: GcsColors.border, width: 1.5),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 72,
+                  height: 72,
                   decoration: BoxDecoration(
-                    color: Colors.black45,
+                    color: GcsColors.surfaceCard,
                     shape: BoxShape.circle,
                     border: Border.all(color: GcsColors.cyanAccent, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: GcsColors.cyanAccent.withValues(alpha: 0.25),
+                        blurRadius: 12,
+                      ),
+                    ],
                   ),
-                  child: Icon(step['icon'] as IconData, color: GcsColors.cyanAccent, size: 40),
+                  child: Icon(step['icon'] as IconData, color: GcsColors.cyanAccent, size: 36),
                 ),
-                const SizedBox(width: 24),
+                const SizedBox(width: 20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'STEP ${_currentStep + 1} OF ${_steps.length}: ${step["title"]}',
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'monospace', color: Colors.white),
+                        'POSITION ${_currentStep + 1}: ${step["title"].toString().toUpperCase()}',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'monospace', color: GcsColors.goldAccent, letterSpacing: 0.8),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         step['desc'] as String,
-                        style: const TextStyle(fontSize: 13, color: Colors.white70),
+                        style: const TextStyle(fontSize: 12, color: Colors.white70),
                       ),
                     ],
                   ),
@@ -124,7 +165,7 @@ class _AccelCalibrationWizardState extends State<AccelCalibrationWizard> {
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Action Buttons
           Row(
@@ -137,14 +178,19 @@ class _AccelCalibrationWizardState extends State<AccelCalibrationWizard> {
                 ),
                 icon: _isCalibrating
                     ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                    : const Icon(Icons.check),
-                label: Text(_currentStep < _steps.length - 1 ? 'CAPTURE & PROCEED' : 'FINISH CALIBRATION'),
+                    : const Icon(Icons.check, size: 18),
+                label: Text(_currentStep < _steps.length - 1 ? 'CAPTURE & PROCEED' : 'FINISH CALIBRATION', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                 onPressed: _isCalibrating ? null : _advanceStep,
               ),
               const SizedBox(width: 12),
-              TextButton.icon(
-                icon: const Icon(Icons.refresh, color: Colors.white60),
-                label: const Text('RESTART', style: TextStyle(color: Colors.white60)),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: GcsColors.textSecondary,
+                  side: const BorderSide(color: GcsColors.border),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('RESTART', style: TextStyle(fontFamily: 'monospace', fontSize: 11)),
                 onPressed: _restart,
               ),
             ],

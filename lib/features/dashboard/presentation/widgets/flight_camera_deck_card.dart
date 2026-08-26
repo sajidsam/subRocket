@@ -7,6 +7,8 @@ import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
 import '../../../../core/services/mavlink_service.dart';
 import 'camera_viewfinder_card.dart';
+import 'ip_camera_setup_dialog.dart';
+import 'ip_webcam_stream_view.dart';
 
 class FlightCameraDeckCard extends StatefulWidget {
   final bool isSwapped;
@@ -551,10 +553,15 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 1. Live Mountain Landscape Background
-        CustomPaint(
-          painter: MountainLandscapePainter(animation: _animController),
-        ),
+        // 1. Live Camera Feed (IP Webcam) or Mountain Landscape Background
+        if (vehicle.isUsingSimulatedCamera)
+          CustomPaint(
+            painter: MountainLandscapePainter(animation: _animController),
+          )
+        else
+          IpWebcamStreamView(
+            streamUrl: vehicle.cameraStreamUrl,
+          ),
 
         // 2. Mini Horizon Reticle
         Center(
