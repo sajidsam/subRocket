@@ -33,6 +33,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> with SingleTicker
     return Scaffold(
       backgroundColor: GcsColors.frameBackground,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: GcsColors.surfaceDark,
         elevation: 0,
         title: Row(

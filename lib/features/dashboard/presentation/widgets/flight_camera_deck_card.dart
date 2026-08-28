@@ -383,18 +383,31 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
 
   Widget _buildModeTab(String label) {
     final isSelected = _selectedMode == label;
+    Color activeColor;
+    switch (label) {
+      case 'ISO':
+        activeColor = const Color(0xFFF59E0B); // Yellow
+        break;
+      case 'HDR':
+        activeColor = const Color(0xFFFA7B35); // Orange
+        break;
+      case 'DVR':
+      default:
+        activeColor = const Color(0xFF10B981); // Green
+    }
+
     return Expanded(
       child: InkWell(
         borderRadius: BorderRadius.circular(5),
         onTap: () => setState(() => _selectedMode = label),
         child: Container(
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFA7B35) : Colors.transparent,
+            color: isSelected ? activeColor : Colors.transparent,
             borderRadius: BorderRadius.circular(5),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: const Color(0xFFFA7B35).withValues(alpha: 0.35),
+                      color: activeColor.withValues(alpha: 0.35),
                       blurRadius: 5,
                       offset: const Offset(0, 1),
                     ),
@@ -405,7 +418,7 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
             child: Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF9AA4B2),
+                color: isSelected ? Colors.black : const Color(0xFF9AA4B2),
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.5,
@@ -1084,12 +1097,21 @@ class _CameraDpadControl extends StatelessWidget {
                     onTap: onToggleAwb,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: awbActive ? const Color(0xFF383E4B) : const Color(0xFF22252C),
+                        color: awbActive ? const Color(0xFFFA7B35) : const Color(0xFF22252C),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
-                          color: awbActive ? Colors.white38 : Colors.white12,
+                          color: awbActive ? const Color(0xFFFA7B35) : Colors.white12,
                           width: 1,
                         ),
+                        boxShadow: awbActive
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFFFA7B35).withValues(alpha: 0.4),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ]
+                            : null,
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -1111,12 +1133,21 @@ class _CameraDpadControl extends StatelessWidget {
                     onTap: onToggleDisp,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: dispActive ? const Color(0xFF383E4B) : const Color(0xFF22252C),
+                        color: dispActive ? const Color(0xFFFA7B35) : const Color(0xFF22252C),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
-                          color: dispActive ? Colors.white38 : Colors.white12,
+                          color: dispActive ? const Color(0xFFFA7B35) : Colors.white12,
                           width: 1,
                         ),
+                        boxShadow: dispActive
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFFFA7B35).withValues(alpha: 0.4),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ]
+                            : null,
                       ),
                       alignment: Alignment.center,
                       child: Text(

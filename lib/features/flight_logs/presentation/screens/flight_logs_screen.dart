@@ -3,7 +3,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/models/log_entry.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
-import '../../../../core/presentation/widgets/gcs_drawer.dart';
 import '../../../../core/services/flight_logger_service.dart';
 
 class FlightLogsScreen extends StatefulWidget {
@@ -14,6 +13,7 @@ class FlightLogsScreen extends StatefulWidget {
 }
 
 class _FlightLogsScreenState extends State<FlightLogsScreen> {
+  static const Color _orangeAccent = Color(0xFFFA7B35);
   int _selectedSessionIndex = 0;
   String _selectedPlot = 'ALTITUDE';
 
@@ -27,8 +27,8 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
 
     return Scaffold(
       backgroundColor: GcsColors.frameBackground,
-      drawer: const GcsDrawer(),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: GcsColors.surfaceDark,
         elevation: 0,
         title: Row(
@@ -36,14 +36,14 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: GcsColors.aviationBlue.withValues(alpha: 0.2),
+                color: _orangeAccent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: GcsColors.cyanAccent.withValues(alpha: 0.6)),
+                border: Border.all(color: _orangeAccent.withValues(alpha: 0.6)),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.photo_library, color: GcsColors.cyanAccent, size: 16),
+                  Icon(Icons.photo_library, color: _orangeAccent, size: 16),
                   SizedBox(width: 6),
                   Text(
                     'BLACKBOX LOGS',
@@ -99,7 +99,7 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                       children: [
                         Row(
                           children: const [
-                            Icon(Icons.history, color: GcsColors.goldAccent, size: 18),
+                            Icon(Icons.history, color: _orangeAccent, size: 18),
                             SizedBox(width: 6),
                             Text('RECORDED SESSIONS', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 11, color: Colors.white)),
                           ],
@@ -107,11 +107,11 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: GcsColors.cyanAccent.withValues(alpha: 0.15),
+                            color: _orangeAccent.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: GcsColors.cyanAccent.withValues(alpha: 0.4)),
+                            border: Border.all(color: _orangeAccent.withValues(alpha: 0.4)),
                           ),
-                          child: Text('${sessions.length}', style: const TextStyle(fontWeight: FontWeight.bold, color: GcsColors.cyanAccent, fontFamily: 'monospace', fontSize: 11)),
+                          child: Text('${sessions.length}', style: const TextStyle(fontWeight: FontWeight.bold, color: _orangeAccent, fontFamily: 'monospace', fontSize: 11)),
                         ),
                       ],
                     ),
@@ -139,7 +139,7 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                                   color: isSelected ? GcsColors.surfaceCard : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: isSelected ? GcsColors.cyanAccent : Colors.transparent,
+                                    color: isSelected ? _orangeAccent : Colors.transparent,
                                     width: 1,
                                   ),
                                 ),
@@ -147,7 +147,7 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                                   dense: true,
                                   leading: Icon(
                                     Icons.description_outlined,
-                                    color: isSelected ? GcsColors.goldAccent : GcsColors.textMuted,
+                                    color: isSelected ? _orangeAccent : GcsColors.textMuted,
                                     size: 20,
                                   ),
                                   title: Text(
@@ -161,7 +161,7 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                                   ),
                                   subtitle: Text(
                                     'Duration: $durStr | Max: ${s.maxAltitude.toStringAsFixed(0)}m',
-                                    style: TextStyle(fontSize: 10, color: isSelected ? GcsColors.cyanAccent : GcsColors.textMuted, fontFamily: 'monospace'),
+                                    style: TextStyle(fontSize: 10, color: isSelected ? _orangeAccent : GcsColors.textMuted, fontFamily: 'monospace'),
                                   ),
                                   onTap: () => setState(() => _selectedSessionIndex = index),
                                 ),
@@ -197,9 +197,9 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              _buildStatCard('MAX ALTITUDE', '${activeSession.maxAltitude.toStringAsFixed(1)} m', GcsColors.cyanAccent),
-                              _buildStatCard('TOP SPEED', '${activeSession.maxSpeed.toStringAsFixed(1)} m/s', GcsColors.greenActive),
-                              _buildStatCard('DISTANCE', '${activeSession.totalDistance.toStringAsFixed(0)} m', GcsColors.goldAccent),
+                              _buildStatCard('MAX ALTITUDE', '${activeSession.maxAltitude.toStringAsFixed(1)} m', _orangeAccent),
+                              _buildStatCard('TOP SPEED', '${activeSession.maxSpeed.toStringAsFixed(1)} m/s', _orangeAccent),
+                              _buildStatCard('DISTANCE', '${activeSession.totalDistance.toStringAsFixed(0)} m', _orangeAccent),
                               _buildStatCard('LOG FRAMES', '${activeSession.frames.length}', Colors.white),
                             ],
                           ),
@@ -232,13 +232,13 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                                           child: Container(
                                             padding: const EdgeInsets.all(6),
                                             decoration: BoxDecoration(
-                                              color: logger.isReplaying ? GcsColors.alertRed.withValues(alpha: 0.2) : GcsColors.cyanAccent.withValues(alpha: 0.2),
+                                              color: logger.isReplaying ? _orangeAccent.withValues(alpha: 0.3) : _orangeAccent.withValues(alpha: 0.2),
                                               borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: logger.isReplaying ? GcsColors.alertRed : GcsColors.cyanAccent),
+                                              border: Border.all(color: _orangeAccent),
                                             ),
                                             child: Icon(
                                               logger.isReplaying ? Icons.pause : Icons.play_arrow,
-                                              color: logger.isReplaying ? GcsColors.alertRed : GcsColors.cyanAccent,
+                                              color: _orangeAccent,
                                               size: 18,
                                             ),
                                           ),
@@ -246,7 +246,7 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                                         const SizedBox(width: 10),
                                         Text(
                                           logger.isReplaying ? 'REPLAYING TELEMETRY' : 'SCRUBBER PAUSED',
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 11, color: logger.isReplaying ? GcsColors.greenActive : GcsColors.textSecondary),
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 11, color: logger.isReplaying ? _orangeAccent : GcsColors.textSecondary),
                                         ),
                                       ],
                                     ),
@@ -262,9 +262,9 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                                             child: Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                               decoration: BoxDecoration(
-                                                color: isSelected ? GcsColors.goldAccent : GcsColors.surfaceCard,
+                                                color: isSelected ? _orangeAccent : GcsColors.surfaceCard,
                                                 borderRadius: BorderRadius.circular(4),
-                                                border: Border.all(color: isSelected ? GcsColors.goldAccent : GcsColors.border),
+                                                border: Border.all(color: isSelected ? _orangeAccent : GcsColors.border),
                                               ),
                                               child: Text(
                                                 '${speed.toInt()}x',
@@ -287,7 +287,7 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                                   value: activeSession.frames.isNotEmpty
                                       ? (logger.playbackIndex / (activeSession.frames.length - 1)).clamp(0.0, 1.0)
                                       : 0.0,
-                                  activeColor: GcsColors.cyanAccent,
+                                  activeColor: _orangeAccent,
                                   inactiveColor: GcsColors.border,
                                   onChanged: (val) => logger.seekPlayback(activeSession, val),
                                 ),
@@ -314,9 +314,9 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                                     ),
                                   ),
                                   selected: isSel,
-                                  selectedColor: GcsColors.cyanAccent,
+                                  selectedColor: _orangeAccent,
                                   backgroundColor: GcsColors.surfaceDark,
-                                  side: BorderSide(color: isSel ? GcsColors.cyanAccent : GcsColors.border),
+                                  side: BorderSide(color: isSel ? _orangeAccent : GcsColors.border),
                                   onSelected: (sel) {
                                     if (sel) setState(() => _selectedPlot = m);
                                   },
@@ -372,12 +372,12 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                                     LineChartBarData(
                                       spots: _extractSessionSpots(activeSession),
                                       isCurved: true,
-                                      color: GcsColors.cyanAccent,
+                                      color: _orangeAccent,
                                       barWidth: 2.5,
                                       dotData: const FlDotData(show: false),
                                       belowBarData: BarAreaData(
                                         show: true,
-                                        color: GcsColors.cyanAccent.withValues(alpha: 0.15),
+                                        color: _orangeAccent.withValues(alpha: 0.15),
                                       ),
                                     ),
                                   ],

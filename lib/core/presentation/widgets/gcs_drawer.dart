@@ -62,7 +62,7 @@ class GcsDrawer extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
                         Text(
-                          'ROCKET GCS',
+                          'SAFAR GCS',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -112,7 +112,7 @@ class GcsDrawer extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '${vehicle.connectionType} | ArduPilot v4.5',
+                        '${vehicle.connectionType} | SAFAR OS',
                         style: const TextStyle(color: GcsColors.textSecondary, fontSize: 10, fontFamily: 'monospace'),
                       ),
                     ],

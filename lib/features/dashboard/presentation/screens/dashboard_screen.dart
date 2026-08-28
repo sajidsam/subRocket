@@ -211,7 +211,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               // Zone A: Camera Viewfinder Card / Swappable Main Screen
               Expanded(
-                flex: 58,
                 child: CameraViewfinderCard(
                   isSwapped: _isMapPrimary,
                   isDispActive: _isCameraDispActive,
@@ -221,9 +220,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Zone B: Flight & Camera Deck Card (with Mini Map / Mini Camera View)
-              Expanded(
-                flex: 42,
+              // Zone B: Flight & Camera Deck Card (Fixed compact height so camera feed gets all expanded height)
+              SizedBox(
+                height: 200,
                 child: FlightCameraDeckCard(
                   isSwapped: _isMapPrimary,
                   isDispActive: _isCameraDispActive,
@@ -344,10 +343,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Row(
             children: const [
-              Icon(Icons.wb_sunny, color: GcsColors.goldAccent, size: 22),
+              Icon(Icons.wb_sunny_outlined, color: Color(0xFFF59E0B), size: 22),
               SizedBox(width: 8),
               Text(
-                'CAMERA EXPOSURE & LIVE TELEMETRY TELEMETRY',
+                'CAMERA & LIGHTING CONTROLS',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -372,7 +371,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('LIVE ATTITUDE & ACCEL PLOTS', style: TextStyle(color: GcsColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('LIVE ATTITUDE & ACCEL PLOTS', style: TextStyle(color: GcsColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFA7B35).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: const Color(0xFFFA7B35).withValues(alpha: 0.5)),
+                              ),
+                              child: const Text('TELEMETRY SYNC', style: TextStyle(color: Color(0xFFFA7B35), fontSize: 9, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 12),
                         Expanded(
                           child: Consumer<FlightLoggerService>(
@@ -398,11 +411,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     LineChartBarData(
                                       spots: spots,
                                       isCurved: true,
-                                      color: GcsColors.cyanAccent,
+                                      color: const Color(0xFFFA7B35),
                                       barWidth: 2.5,
                                       belowBarData: BarAreaData(
                                         show: true,
-                                        color: GcsColors.cyanAccent.withValues(alpha: 0.15),
+                                        color: const Color(0xFFFA7B35).withValues(alpha: 0.15),
                                       ),
                                     ),
                                   ],
@@ -428,13 +441,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('SENSOR TUNING', style: TextStyle(color: GcsColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold)),
+                        const Text('CAMERA & LIGHTING HARDWARE', style: TextStyle(color: GcsColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
-                        _buildSettingToggle('Auto Exposure Bracketing', true),
-                        _buildSettingToggle('Electronic Image Stabilization', true),
-                        _buildSettingToggle('Dynamic HDR Tone Mapping', true),
-                        _buildSettingToggle('Thermal False Color Overlay', false),
-                        _buildSettingToggle('Night Vision Infrared Strobe', false),
+                        _buildSettingToggle('Auto Exposure Bracketing', true, const Color(0xFFFA7B35)), // Orange
+                        _buildSettingToggle('Electronic Image Stabilization', true, const Color(0xFF10B981)), // Green
+                        _buildSettingToggle('Dynamic HDR Tone Mapping', true, const Color(0xFFF59E0B)), // Yellow
+                        _buildSettingToggle('Thermal False Color Overlay', false, const Color(0xFFFA7B35)), // Orange
+                        _buildSettingToggle('Night Vision Infrared Strobe', false, const Color(0xFF10B981)), // Green
+                        _buildSettingToggle('High-Intensity Searchlight (Gimbal)', false, const Color(0xFFF59E0B)), // Yellow
                       ],
                     ),
                   ),
@@ -447,7 +461,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSettingToggle(String title, bool initial) {
+  Widget _buildSettingToggle(String title, bool initial, [Color activeColor = const Color(0xFFFA7B35)]) {
     return StatefulBuilder(
       builder: (context, setState) {
         return Padding(
@@ -458,7 +472,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(title, style: const TextStyle(color: Colors.white70, fontSize: 11)),
               Switch(
                 value: initial,
-                activeThumbColor: GcsColors.aviationBlue,
+                activeThumbColor: activeColor,
+                activeTrackColor: activeColor.withValues(alpha: 0.4),
                 onChanged: (val) => setState(() => initial = val),
               ),
             ],

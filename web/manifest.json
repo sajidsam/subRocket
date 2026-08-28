@@ -1,6 +1,6 @@
 {
-    "name": "rocket_controller",
-    "short_name": "rocket_controller",
+    "name": "SAFAR GCS",
+    "short_name": "safar",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

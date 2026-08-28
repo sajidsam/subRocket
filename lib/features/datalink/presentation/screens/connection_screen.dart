@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
-import '../../../../core/presentation/widgets/gcs_drawer.dart';
 import '../../../../core/services/mavlink_service.dart';
 
 class ConnectionScreen extends StatefulWidget {
@@ -42,8 +41,8 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
 
     return Scaffold(
       backgroundColor: GcsColors.frameBackground,
-      drawer: const GcsDrawer(),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: GcsColors.surfaceDark,
         elevation: 0,
         title: Row(

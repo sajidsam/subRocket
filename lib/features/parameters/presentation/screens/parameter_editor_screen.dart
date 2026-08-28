@@ -47,7 +47,7 @@ class ParameterEditorScreen extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             const Text(
-              'ARDUPILOT EEPROM PARAMETER TREE',
+              'SAFAR EEPROM PARAMETER TREE',
               style: TextStyle(
                 fontSize: 11,
                 color: GcsColors.textSecondary,

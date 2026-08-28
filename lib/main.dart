@@ -38,7 +38,7 @@ class RocketGcsApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'RocketController GCS - ArduPilot',
+      title: 'SAFAR GCS',
       debugShowCheckedModeBanner: false,
       theme: GcsTheme.darkTheme,
       home: const DashboardScreen(),

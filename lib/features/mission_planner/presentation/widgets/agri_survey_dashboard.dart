@@ -64,35 +64,50 @@ class _AgriSurveyDashboardState extends State<AgriSurveyDashboard> {
     const double photoInterval = 12.0;
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(8),
       decoration: const BoxDecoration(
         color: AgriColors.background,
         border: Border(
           bottom: BorderSide(color: AgriColors.border, width: 1.0),
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Left Telemetry & Quick Action Card
-          _buildLeftRouteCard(vehicle),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Left Telemetry & Quick Action Card
+            _buildLeftRouteCard(vehicle),
 
-          const SizedBox(width: 10),
+            const SizedBox(width: 8),
 
-          // 2. Middle Universal Drone Mission Parameters Grid
-          Expanded(
-            child: _buildParametersGrid(
-              estSeconds: estSeconds,
-              estPhotos: estPhotos,
-              photoInterval: photoInterval,
+            // 2. Middle Box 1: Payload & Resolution Config
+            Expanded(
+              flex: 12,
+              child: _buildPayloadConfigCard(),
             ),
-          ),
 
-          const SizedBox(width: 10),
+            const SizedBox(width: 8),
 
-          // 3. Right Toggle Switches and Action Buttons
-          _buildRightActionControls(),
-        ],
+            // 3. Middle Box 2: Mission Coverage & Triggers
+            Expanded(
+              flex: 11,
+              child: _buildMissionCoverageCard(estPhotos, photoInterval),
+            ),
+
+            const SizedBox(width: 8),
+
+            // 4. Middle Box 3: Flight Metrics & Waypoints
+            Expanded(
+              flex: 11,
+              child: _buildFlightMetricsCard(estSeconds),
+            ),
+
+            const SizedBox(width: 8),
+
+            // 5. Right Toggle Switches and Action Buttons
+            _buildRightActionControls(),
+          ],
+        ),
       ),
     );
   }
@@ -102,7 +117,7 @@ class _AgriSurveyDashboardState extends State<AgriSurveyDashboard> {
     final int currentMah = (capacityMah * (vehicle.batteryRemaining / 100)).toInt();
 
     return Container(
-      width: 275,
+      width: 255,
       padding: const EdgeInsets.all(10),
       decoration: AgriDecorations.cardBox(
         color: AgriColors.cardBackground,
@@ -111,6 +126,7 @@ class _AgriSurveyDashboardState extends State<AgriSurveyDashboard> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Route Header
           Row(
@@ -150,7 +166,7 @@ class _AgriSurveyDashboardState extends State<AgriSurveyDashboard> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // Mini telemetry stats
           Row(
@@ -303,188 +319,176 @@ class _AgriSurveyDashboardState extends State<AgriSurveyDashboard> {
     );
   }
 
-  Widget _buildParametersGrid({
-    required double estSeconds,
-    required int estPhotos,
-    required double photoInterval,
-  }) {
+  // Middle Box 1: Payload & Resolution Config Card
+  Widget _buildPayloadConfigCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: AgriDecorations.cardBox(
         color: AgriColors.cardBackground,
         radius: 8,
         borderColor: AgriColors.border,
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Column 1: Payload, Alt Ref, Resolution cm/px, Lat Overlap %
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildParamRow(
-                      label: 'Payload',
-                      valueWidget: Row(
-                        children: [
-                          _buildChoiceChip(
-                            label: 'RGB 4K',
-                            isSelected: _selectedPayload == 'RGB 4K',
-                            onSelect: () => setState(() => _selectedPayload = 'RGB 4K'),
-                          ),
-                          const SizedBox(width: 4),
-                          _buildChoiceChip(
-                            label: 'Thermal',
-                            isSelected: _selectedPayload == 'Thermal',
-                            onSelect: () => setState(() => _selectedPayload = 'Thermal'),
-                          ),
-                          const SizedBox(width: 4),
-                          _buildChoiceChip(
-                            label: 'LiDAR',
-                            isSelected: _selectedPayload == 'LiDAR',
-                            onSelect: () => setState(() => _selectedPayload = 'LiDAR'),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildParamRow(
-                      label: 'Alt Reference',
-                      valueWidget: Row(
-                        children: [
-                          _buildChoiceChip(
-                            label: 'AGL',
-                            isSelected: _selectedAltRef == 'AGL',
-                            onSelect: () => setState(() => _selectedAltRef = 'AGL'),
-                          ),
-                          const SizedBox(width: 4),
-                          _buildChoiceChip(
-                            label: 'AMSL',
-                            isSelected: _selectedAltRef == 'AMSL',
-                            onSelect: () => setState(() => _selectedAltRef = 'AMSL'),
-                          ),
-                          const SizedBox(width: 4),
-                          _buildChoiceChip(
-                            label: 'Terrain',
-                            isSelected: _selectedAltRef == 'Terrain',
-                            onSelect: () => setState(() => _selectedAltRef = 'Terrain'),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildSliderParamRow(
-                      label: 'Resolution cm/px',
-                      value: _resolution,
-                      min: 0,
-                      max: 20,
-                      onChanged: (v) => setState(() => _resolution = v),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildSliderParamRow(
-                      label: 'Side overlap %',
-                      value: _latOverlap,
-                      min: 0,
-                      max: 100,
-                      onChanged: (v) => setState(() => _latOverlap = v),
-                    ),
-                  ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildParamRow(
+            label: 'Payload',
+            valueWidget: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildChoiceChip(
+                  label: 'RGB 4K',
+                  isSelected: _selectedPayload == 'RGB 4K',
+                  onSelect: () => setState(() => _selectedPayload = 'RGB 4K'),
                 ),
-              ),
-
-              const SizedBox(width: 14),
-
-              // Column 2: Area, Target Altitude, Trigger Count, Trigger Interval, Front Overlap %
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildParamRow(
-                      label: 'Mission Area',
-                      valueWidget: Text(
-                        widget.calculatedAreaHa > 0 ? '${widget.calculatedAreaHa.toStringAsFixed(2)} ha' : '-- ha',
-                        style: const TextStyle(color: AgriColors.textWhite, fontSize: 11, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildParamRow(
-                      label: 'Target Altitude',
-                      valueWidget: Text(
-                        widget.waypointCount > 0 ? '20.0 m / $_selectedAltRef' : '-- m / $_selectedAltRef',
-                        style: const TextStyle(color: AgriColors.textWhite, fontSize: 11),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildParamRow(
-                      label: 'Trigger Count',
-                      valueWidget: Text(estPhotos > 0 ? '$estPhotos' : '--', style: const TextStyle(color: AgriColors.textWhite, fontSize: 11)),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildParamRow(
-                      label: 'Trigger Interval',
-                      valueWidget: Text(widget.totalDistanceMeters > 0 ? '${photoInterval.toStringAsFixed(0)} m' : '-- m', style: const TextStyle(color: AgriColors.textWhite, fontSize: 11)),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildSliderParamRow(
-                      label: 'Front overlap %',
-                      value: _longOverlap,
-                      min: 0,
-                      max: 100,
-                      onChanged: (v) => setState(() => _longOverlap = v),
-                    ),
-                  ],
+                const SizedBox(width: 3),
+                _buildChoiceChip(
+                  label: 'Thermal',
+                  isSelected: _selectedPayload == 'Thermal',
+                  onSelect: () => setState(() => _selectedPayload = 'Thermal'),
                 ),
-              ),
-
-              const SizedBox(width: 14),
-
-              // Column 3: Turn Mode, Est Flight Time, Est Distance, Track Spacing, Waypoints
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildParamRow(
-                      label: 'Turn Mode',
-                      valueWidget: const Text('Coordinated', style: TextStyle(color: AgriColors.textWhite, fontSize: 11)),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildParamRow(
-                      label: 'Est. Flight Time',
-                      valueWidget: Text(_formatDuration(estSeconds), style: const TextStyle(color: AgriColors.textWhite, fontSize: 11, fontFamily: 'monospace')),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildParamRow(
-                      label: 'Est. Distance',
-                      valueWidget: Text(
-                        widget.totalDistanceMeters > 0
-                            ? (widget.totalDistanceMeters >= 1000
-                                ? '${(widget.totalDistanceMeters / 1000).toStringAsFixed(2)} km'
-                                : '${widget.totalDistanceMeters.toStringAsFixed(0)} m')
-                            : '--',
-                        style: const TextStyle(color: AgriColors.textWhite, fontSize: 11),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildParamRow(
-                      label: 'Track Spacing',
-                      valueWidget: const Text('15.0 m', style: TextStyle(color: AgriColors.textWhite, fontSize: 11)),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildParamRow(
-                      label: 'Waypoints',
-                      valueWidget: Text('${widget.waypointCount}', style: const TextStyle(color: AgriColors.orangePrimary, fontWeight: FontWeight.bold, fontSize: 11)),
-                    ),
-                  ],
+                const SizedBox(width: 3),
+                _buildChoiceChip(
+                  label: 'LiDAR',
+                  isSelected: _selectedPayload == 'LiDAR',
+                  onSelect: () => setState(() => _selectedPayload = 'LiDAR'),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            ),
+          ),
+          _buildParamRow(
+            label: 'Alt Reference',
+            valueWidget: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildChoiceChip(
+                  label: 'AGL',
+                  isSelected: _selectedAltRef == 'AGL',
+                  onSelect: () => setState(() => _selectedAltRef = 'AGL'),
+                ),
+                const SizedBox(width: 3),
+                _buildChoiceChip(
+                  label: 'AMSL',
+                  isSelected: _selectedAltRef == 'AMSL',
+                  onSelect: () => setState(() => _selectedAltRef = 'AMSL'),
+                ),
+                const SizedBox(width: 3),
+                _buildChoiceChip(
+                  label: 'Terrain',
+                  isSelected: _selectedAltRef == 'Terrain',
+                  onSelect: () => setState(() => _selectedAltRef = 'Terrain'),
+                ),
+              ],
+            ),
+          ),
+          _buildSliderParamRow(
+            label: 'Resolution cm/px',
+            value: _resolution,
+            min: 0,
+            max: 20,
+            onChanged: (v) => setState(() => _resolution = v),
+          ),
+          _buildSliderParamRow(
+            label: 'Side overlap %',
+            value: _latOverlap,
+            min: 0,
+            max: 100,
+            onChanged: (v) => setState(() => _latOverlap = v),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Middle Box 2: Mission Coverage & Triggers Card
+  Widget _buildMissionCoverageCard(int estPhotos, double photoInterval) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: AgriDecorations.cardBox(
+        color: AgriColors.cardBackground,
+        radius: 8,
+        borderColor: AgriColors.border,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildParamRow(
+            label: 'Mission Area',
+            valueWidget: Text(
+              widget.calculatedAreaHa > 0 ? '${widget.calculatedAreaHa.toStringAsFixed(2)} ha' : '-- ha',
+              style: const TextStyle(color: AgriColors.textWhite, fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ),
+          _buildParamRow(
+            label: 'Target Altitude',
+            valueWidget: Text(
+              widget.waypointCount > 0 ? '20.0 m / $_selectedAltRef' : '-- m / $_selectedAltRef',
+              style: const TextStyle(color: AgriColors.textWhite, fontSize: 11),
+            ),
+          ),
+          _buildParamRow(
+            label: 'Trigger Count',
+            valueWidget: Text(estPhotos > 0 ? '$estPhotos' : '--', style: const TextStyle(color: AgriColors.textWhite, fontSize: 11)),
+          ),
+          _buildParamRow(
+            label: 'Trigger Interval',
+            valueWidget: Text(widget.totalDistanceMeters > 0 ? '${photoInterval.toStringAsFixed(0)} m' : '-- m', style: const TextStyle(color: AgriColors.textWhite, fontSize: 11)),
+          ),
+          _buildSliderParamRow(
+            label: 'Front overlap %',
+            value: _longOverlap,
+            min: 0,
+            max: 100,
+            onChanged: (v) => setState(() => _longOverlap = v),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Middle Box 3: Flight Metrics & Waypoints Card
+  Widget _buildFlightMetricsCard(double estSeconds) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: AgriDecorations.cardBox(
+        color: AgriColors.cardBackground,
+        radius: 8,
+        borderColor: AgriColors.border,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildParamRow(
+            label: 'Turn Mode',
+            valueWidget: const Text('Coordinated', style: TextStyle(color: AgriColors.textWhite, fontSize: 11)),
+          ),
+          _buildParamRow(
+            label: 'Est. Flight Time',
+            valueWidget: Text(_formatDuration(estSeconds), style: const TextStyle(color: AgriColors.textWhite, fontSize: 11, fontFamily: 'monospace')),
+          ),
+          _buildParamRow(
+            label: 'Est. Distance',
+            valueWidget: Text(
+              widget.totalDistanceMeters > 0
+                  ? (widget.totalDistanceMeters >= 1000
+                      ? '${(widget.totalDistanceMeters / 1000).toStringAsFixed(2)} km'
+                      : '${widget.totalDistanceMeters.toStringAsFixed(0)} m')
+                  : '--',
+              style: const TextStyle(color: AgriColors.textWhite, fontSize: 11),
+            ),
+          ),
+          _buildParamRow(
+            label: 'Track Spacing',
+            valueWidget: const Text('15.0 m', style: TextStyle(color: AgriColors.textWhite, fontSize: 11)),
+          ),
+          _buildParamRow(
+            label: 'Waypoints',
+            valueWidget: Text('${widget.waypointCount}', style: const TextStyle(color: AgriColors.orangePrimary, fontWeight: FontWeight.bold, fontSize: 11)),
+          ),
+        ],
       ),
     );
   }
@@ -614,6 +618,7 @@ class _AgriSurveyDashboardState extends State<AgriSurveyDashboard> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Crosshatch grid toggle
           Row(
@@ -662,42 +667,39 @@ class _AgriSurveyDashboardState extends State<AgriSurveyDashboard> {
               ),
             ],
           ),
-          const SizedBox(height: 4),
 
           // Reset plan outline button
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               foregroundColor: AgriColors.textPrimary,
               side: const BorderSide(color: AgriColors.borderLight),
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: 5),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               visualDensity: VisualDensity.compact,
             ),
             onPressed: widget.onResetProgress,
             child: const Text('Reset plan', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
           ),
-          const SizedBox(height: 4),
 
           // Show altitude profile outline button
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               foregroundColor: AgriColors.textPrimary,
               side: const BorderSide(color: AgriColors.borderLight),
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: 5),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               visualDensity: VisualDensity.compact,
             ),
             onPressed: widget.onToggleWaypointsView,
             child: const Text('Altitude Profile', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
           ),
-          const SizedBox(height: 6),
 
           // Sync mission Solid Orange Button
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AgriColors.orangePrimary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 7),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               elevation: 2,
               visualDensity: VisualDensity.compact,

@@ -43,3 +43,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Executables, ZIP archives and Distribution builds
+*.exe
+*.dll
+*.zip
+*.7z
+*.rar
+*.msi
+/dist/
+/release/
+/build/
+/windows/flutter/ephemeral/
