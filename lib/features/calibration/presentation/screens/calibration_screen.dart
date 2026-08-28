@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
-import '../../../../core/presentation/widgets/gcs_drawer.dart';
 import '../widgets/accel_calibration_wizard.dart';
 import '../widgets/compass_calibration_wizard.dart';
 import '../widgets/motor_test_panel.dart';
@@ -33,7 +32,6 @@ class _CalibrationScreenState extends State<CalibrationScreen> with SingleTicker
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: GcsColors.frameBackground,
-      drawer: const GcsDrawer(),
       appBar: AppBar(
         backgroundColor: GcsColors.surfaceDark,
         elevation: 0,

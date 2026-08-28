@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/models/flight_mode.dart';
 import '../../../../core/models/mission_command.dart';
 import '../../../../core/models/vehicle_state.dart';
-import '../../../../core/presentation/widgets/gcs_drawer.dart';
 import '../../../../core/services/mavlink_service.dart';
 import '../widgets/agri_map_toolbar.dart';
 import '../widgets/agri_survey_dashboard.dart';
@@ -23,7 +22,6 @@ class MissionPlannerScreen extends StatefulWidget {
 }
 
 class _MissionPlannerScreenState extends State<MissionPlannerScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final MapController _mapController = MapController();
   final List<MissionItem> _localPlan = [];
 
@@ -172,20 +170,17 @@ class _MissionPlannerScreenState extends State<MissionPlannerScreen> {
     final areaHa = _calculateEnclosedAreaHa();
 
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: AgriColors.background,
-      drawer: const GcsDrawer(),
       body: SafeArea(
         child: Column(
           children: [
-            // 1. Top Mission Parameters Dashboard (Battery, Sliders, Actions, Drawer Toggle)
+            // 1. Top Mission Parameters Dashboard (Battery, Sliders, Actions)
             AgriSurveyDashboard(
               routeNumber: 17,
               totalDistanceMeters: totalDist,
               waypointCount: _localPlan.length,
               calculatedAreaHa: areaHa,
               showAltitudeChart: _showAltitudeChart,
-              onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
               onToggleAltitudeChart: () => setState(() => _showAltitudeChart = !_showAltitudeChart),
               onOpenGeofence: () => showDialog(context: context, builder: (_) => const GeofenceEditorDialog()),
               onResetProgress: () {

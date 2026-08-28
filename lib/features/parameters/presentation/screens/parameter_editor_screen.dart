@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/models/parameter_item.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
-import '../../../../core/presentation/widgets/gcs_drawer.dart';
 import '../../../../core/services/parameter_service.dart';
 
 class ParameterEditorScreen extends StatelessWidget {
@@ -15,8 +14,8 @@ class ParameterEditorScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: GcsColors.frameBackground,
-      drawer: const GcsDrawer(),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: GcsColors.surfaceDark,
         elevation: 0,
         title: Row(

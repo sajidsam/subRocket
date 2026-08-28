@@ -9,7 +9,6 @@ class AgriSurveyDashboard extends StatefulWidget {
   final int waypointCount;
   final double calculatedAreaHa;
   final bool showAltitudeChart;
-  final VoidCallback? onOpenDrawer;
   final VoidCallback onToggleAltitudeChart;
   final VoidCallback onOpenGeofence;
   final VoidCallback onResetProgress;
@@ -25,7 +24,6 @@ class AgriSurveyDashboard extends StatefulWidget {
     required this.waypointCount,
     required this.calculatedAreaHa,
     required this.showAltitudeChart,
-    this.onOpenDrawer,
     required this.onToggleAltitudeChart,
     required this.onOpenGeofence,
     required this.onResetProgress,
@@ -114,25 +112,9 @@ class _AgriSurveyDashboardState extends State<AgriSurveyDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Route Header with Optional Drawer Menu Toggle
+          // Route Header
           Row(
             children: [
-              if (widget.onOpenDrawer != null) ...[
-                InkWell(
-                  onTap: widget.onOpenDrawer,
-                  borderRadius: BorderRadius.circular(6),
-                  child: Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      color: AgriColors.orangeSubtle,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AgriColors.orangePrimary.withValues(alpha: 0.5)),
-                    ),
-                    child: const Icon(Icons.menu_rounded, color: AgriColors.orangePrimary, size: 16),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 decoration: BoxDecoration(
