@@ -60,17 +60,17 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
           // 2. ArduPilot / Drone Flight Telemetry Grid (GSPD, VSPD, ALT, RTH, GPS, MODE)
           _buildFlightTelemetryGrid(vehicle),
 
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
+
+          // 4. Altitude Limit Slider Section
+          _buildAltitudeSection(vehicle),
+
+          const SizedBox(height: 12),
 
           // 3. Flight Control Deck (2x Bigger Redesigned Aerospace Speed Slider + Aerospace Gimbal)
           Expanded(
             child: _buildFlightControlDeck(mavlink, vehicle),
           ),
-
-          const SizedBox(height: 6),
-
-          // 4. Altitude Limit Slider Section
-          _buildAltitudeSection(vehicle),
         ],
       ),
     );
@@ -209,32 +209,57 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
   Widget _buildFlightControlDeck(MavlinkService mavlink, VehicleState vehicle) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Left Column: 2x Bigger Aerospace Speed / Throttle Slider (utilizing vertical space)
         Expanded(
-          child: _buildAerospaceSpeedSlider(mavlink, vehicle),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildAerospaceSpeedSlider(mavlink, vehicle),
+          ),
         ),
 
         // Subtle Technical Vertical Divider
         Container(
           width: 1,
-          height: 280,
           color: Colors.white12,
         ),
 
-        // Right Column: Pitch/Roll 3D Button in original position + ESTOP & RTH directly beneath
+        // Right Column: Action Buttons, ESTOP & RTH, Pitch/Roll 3D Button
         Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildAerospaceGimbal(
-                title: 'PITCH / ROLL',
-                position: _rightStickPos,
-              ),
-              const SizedBox(height: 12),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final faderHeight = (constraints.maxHeight.isFinite && constraints.maxHeight > 200
+                  ? constraints.maxHeight - 30.0
+                  : 330.0).clamp(220.0, 420.0);
+              final topGap = constraints.maxHeight.isFinite 
+                  ? (constraints.maxHeight - faderHeight + 14.0) 
+                  : 44.0;
+
+              return Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(height: topGap), // Align perfectly with slider track head
+                  
+                  // New Action Buttons starting from aligned position
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildArmButton(mavlink, vehicle),
+                      _buildActionButton('LAND', Icons.flight_land, vehicle.mode == FlightMode.land, () => mavlink.setFlightMode(FlightMode.land)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildActionButton('HOLD', Icons.location_on, vehicle.mode == FlightMode.loiter, () => mavlink.setFlightMode(FlightMode.loiter)),
+                      _buildActionButton('AUTO', Icons.route, vehicle.mode == FlightMode.auto, () => mavlink.setFlightMode(FlightMode.auto)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+              
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -243,9 +268,18 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
                   _buildRthButton(mavlink, vehicle),
                 ],
               ),
+              
+              const Spacer(),
+
+              _buildAerospaceGimbal(
+                title: 'PITCH / ROLL',
+                position: _rightStickPos,
+              ),
+              const SizedBox(height: 7), // Align centers perfectly with D-pad (79px from bottom)
             ],
-          ),
-        ),
+          );
+         },
+        )),
       ],
     );
   }
@@ -261,13 +295,6 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
           color: const Color(0xFF181B22),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: const Color(0xFFFA7B35).withValues(alpha: 0.7), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFFA7B35).withValues(alpha: 0.2),
-              blurRadius: 5,
-              offset: const Offset(0, 1),
-            ),
-          ],
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -301,38 +328,121 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
         decoration: BoxDecoration(
-          color: isRtl ? const Color(0xFF2C3545) : const Color(0xFF181B22),
+          color: isRtl ? Colors.red : const Color(0xFF181B22),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: isRtl ? const Color(0xFF20DFB3) : Colors.white24,
+            color: isRtl ? Colors.redAccent : Colors.white24,
             width: 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: isRtl
-                  ? const Color(0xFF20DFB3).withValues(alpha: 0.3)
-                  : Colors.black.withValues(alpha: 0.5),
-              blurRadius: 5,
-              offset: const Offset(0, 1),
-            ),
-          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.home_outlined,
-              color: isRtl ? const Color(0xFF20DFB3) : Colors.white70,
+              color: isRtl ? Colors.white : Colors.white70,
               size: 13,
             ),
             const SizedBox(width: 5),
             Text(
               'RTH',
               style: TextStyle(
-                color: isRtl ? const Color(0xFF20DFB3) : Colors.white,
+                color: Colors.white,
                 fontSize: 9.5,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildArmButton(MavlinkService mavlink, VehicleState vehicle) {
+    final isArmed = vehicle.isArmed;
+    final bgColor = isArmed ? const Color(0xFF10B981) : const Color(0xFFFFC107);
+    final textColor = isArmed ? Colors.white : Colors.black87;
+    final title = isArmed ? 'ARMED' : 'ARM';
+    final icon = isArmed ? Icons.lock_open : Icons.lock;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(6),
+      onTap: () => mavlink.armDisarm(!isArmed),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        width: 66,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isArmed ? const Color(0xFF059669) : const Color(0xFFD97706),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: textColor,
+              size: 11,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              title,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 9.0,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    String title,
+    IconData icon,
+    bool isActive,
+    VoidCallback onTap,
+  ) {
+    final color = isActive ? Colors.white : Colors.white54;
+    return InkWell(
+      borderRadius: BorderRadius.circular(6),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        width: 66,
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white.withValues(alpha: 0.1) : const Color(0xFF181B22),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isActive ? Colors.white54 : Colors.white12,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: color,
+              size: 11,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              title,
+              style: TextStyle(
+                color: color,
+                fontSize: 9.0,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
               ),
             ),
           ],
@@ -419,89 +529,73 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
     );
   }
 
-  // Modern Ergonomic 3D Brushed Silver Fader Knob Handle (No glow, clean precision styling)
+  // Premium Modern Dark Fader Knob Handle
   Widget _buildAerospaceFaderKnob(double width, double height, Color statusColor) {
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFFFFFFF), // pure crisp silver/white top sheen
-            Color(0xFFE5EBF4), // brushed satin silver
-            Color(0xFFCAD4E2), // metallic body
-            Color(0xFF98A6BA), // dark silver bottom edge
+            Color(0xFF2C313C),
+            Color(0xFF1E222A),
           ],
-          stops: [0.0, 0.28, 0.72, 1.0],
         ),
-        border: Border.all(color: const Color(0xFFBAC7D8), width: 1.0),
-        boxShadow: const [
+        border: Border.all(color: Colors.white24, width: 1.0),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x73000000),
-            blurRadius: 5,
-            offset: Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.6),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: statusColor.withValues(alpha: 0.15),
+            blurRadius: 12,
+            spreadRadius: 2,
           ),
         ],
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Left side crisp tactile grip ribs
-          Positioned(
-            left: 3.5,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(width: 2.2, height: 4.5, decoration: BoxDecoration(color: const Color(0xFF334155), borderRadius: BorderRadius.circular(1))),
-                const SizedBox(height: 3),
-                Container(width: 2.2, height: 4.5, decoration: BoxDecoration(color: const Color(0xFF334155), borderRadius: BorderRadius.circular(1))),
-              ],
-            ),
-          ),
-
-          // Right side crisp tactile grip ribs
-          Positioned(
-            right: 3.5,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(width: 2.2, height: 4.5, decoration: BoxDecoration(color: const Color(0xFF334155), borderRadius: BorderRadius.circular(1))),
-                const SizedBox(height: 3),
-                Container(width: 2.2, height: 4.5, decoration: BoxDecoration(color: const Color(0xFF334155), borderRadius: BorderRadius.circular(1))),
-              ],
-            ),
-          ),
-
-          // Center horizontal index groove line (precision dark graphite)
+          // Center glowing neon indicator line
           Container(
-            width: width * 0.52,
-            height: 1.6,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(1),
-            ),
-          ),
-
-          // Center Status LED Jewel Indicator (No blur glow, clean modern bezel)
-          Container(
-            width: 8.0,
-            height: 8.0,
+            width: width * 0.6,
+            height: 3.0,
             decoration: BoxDecoration(
               color: statusColor,
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF0F172A), width: 1.2),
-            ),
-            child: Center(
-              child: Container(
-                width: 2.2,
-                height: 2.2,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(2),
+              boxShadow: [
+                BoxShadow(
+                  color: statusColor.withValues(alpha: 0.6),
+                  blurRadius: 6,
                 ),
+              ],
+            ),
+          ),
+          // Subtle grip lines above and below
+          Positioned(
+            top: 8,
+            child: Container(
+              width: width * 0.3,
+              height: 1.5,
+              decoration: BoxDecoration(
+                color: Colors.white12,
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 8,
+            child: Container(
+              width: width * 0.3,
+              height: 1.5,
+              decoration: BoxDecoration(
+                color: Colors.white12,
+                borderRadius: BorderRadius.circular(1),
               ),
             ),
           ),
