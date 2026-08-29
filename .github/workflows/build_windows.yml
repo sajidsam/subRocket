@@ -1,0 +1,44 @@
+name: Build Windows Release (.exe)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Windows Release (.exe)
+        run: flutter build windows --release
+
+      - name: Package Release ZIP
+        shell: pwsh
+        run: |
+          $releasePath = "build/windows/x64/runner/Release"
+          if (!(Test-Path $releasePath)) {
+              $releasePath = "build/windows/runner/Release"
+          }
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Compress-Archive -Path "$releasePath/*" -DestinationPath "dist/SAFAR_GCS_Windows_x64.zip" -Force
+          Write-Host "Packaged successfully into dist/SAFAR_GCS_Windows_x64.zip"
+
+      - name: Upload Windows Executable Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAFAR_GCS_Windows_x64
+          path: dist/SAFAR_GCS_Windows_x64.zip
+          retention-days: 30
