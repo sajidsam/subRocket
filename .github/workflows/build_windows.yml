@@ -1,12 +1,17 @@
-name: Build Windows Release (.exe)
+name: Build & Release Windows App
 
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
   workflow_dispatch: # Allows manual trigger from GitHub Actions tab
 
+permissions:
+  contents: write
+
 jobs:
-  build-windows:
+  build-and-release:
     runs-on: windows-latest
 
     steps:
@@ -22,23 +27,50 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
+      - name: Extract Version from pubspec.yaml
+        id: get_version
+        shell: pwsh
+        run: |
+          $pubspec = Get-Content pubspec.yaml -Raw
+          if ($pubspec -match "version:\s*([0-9]+\.[0-9]+\.[0-9]+)") {
+              $ver = $matches[1]
+          } else {
+              $ver = "1.0.0"
+          }
+          "VERSION=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Detected SAFAR Version: v$ver"
+
       - name: Build Windows Release (.exe)
         run: flutter build windows --release
 
       - name: Package Release ZIP
         shell: pwsh
         run: |
+          $ver = "${{ steps.get_version.outputs.VERSION }}"
           $releasePath = "build/windows/x64/runner/Release"
           if (!(Test-Path $releasePath)) {
               $releasePath = "build/windows/runner/Release"
           }
           New-Item -ItemType Directory -Path dist -Force | Out-Null
-          Compress-Archive -Path "$releasePath/*" -DestinationPath "dist/SAFAR_GCS_Windows_x64.zip" -Force
-          Write-Host "Packaged successfully into dist/SAFAR_GCS_Windows_x64.zip"
+          $zipName = "dist/SAFAR_GCS_v${ver}_Windows_x64.zip"
+          Compress-Archive -Path "$releasePath/*" -DestinationPath $zipName -Force
+          Write-Host "Packaged successfully into $zipName"
 
-      - name: Upload Windows Executable Artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SAFAR_GCS_Windows_x64
-          path: dist/SAFAR_GCS_Windows_x64.zip
+          name: SAFAR_GCS_v${{ steps.get_version.outputs.VERSION }}_Windows_x64
+          path: dist/*.zip
           retention-days: 30
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
+          name: SAFAR GCS v${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
