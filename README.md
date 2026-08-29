@@ -1,7 +1,7 @@
 <div align="center">
 
 # 🛰️ SAFAR Ground Control Station (GCS)
-### Next-Generation Tactical Telemetry, Cockpit & Autonomous Mission Controller
+### Tactical Telemetry, Autonomous Mission Planner & Avionics Control Suite
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Platform - Windows](https://img.shields.io/badge/Platform-Windows%20x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/sajidsam/subRocket/releases)
@@ -11,119 +11,141 @@
 
 <br/>
 
-**SAFAR GCS** is a high-performance, military-grade Ground Control Station engineered for UAVs, rockets, submersibles, and autonomous aerospace vehicles. Built on Flutter and Dart, it provides a high-density, real-time tactical cockpit interface with low-latency telemetry streaming, dual-viewport camera/satellite overlays, autonomous waypoint planning, and sub-second flight parameter tuning.
+**SAFAR GCS** is a tactical, high-performance Ground Control Station engineered for autonomous UAVs, rockets, and robotic platforms. Built with Flutter, it delivers a responsive dark cockpit interface featuring autonomous waypoint planning, live MAVLink telemetry streams, real-time EEPROM parameter management, and payload camera controls.
 
 <br/>
 
-![SAFAR GCS Cockpit Dashboard](docs/screenshots/dashboard_hero.jpg)
+![SAFAR GCS Mission Planner](docs/screenshots/mission_planner.png)
 
 </div>
 
 ---
 
-## ⚡ Core Highlights
+## ✨ Key Capabilities
 
-- **Dynamic Dual-Zone Cockpit:** Instant one-click swapping between the optical camera viewfinder feed and tactical satellite tracking maps.
-- **Avionics HUD & Primary Flight Display (PFD):** Glassmorphic artificial horizon, pitch ladder, roll bank indicators, airspeed, heading tape, and vertical speed meters.
-- **Autonomous Mission Planner:** Multi-waypoint route generator with polygon geofence enforcement, altitude profile constraints, and real-time loiter commands.
-- **Live Telemetry & Diagnostics:** High-frequency real-time graphing for attitude damping (PID), battery discharge degradation, GPS HDOP, and RF signal strength (RSSI).
-- **On-Board Parameter Management:** Live read/write calibration of vehicle firmware registers with validation safety checks.
-- **Hardware-Level Safety & Emergency Controls:** Instant emergency motor killswitch, Return-to-Launch (RTL), and tactile keyboard override bindings.
-
----
-
-## 📸 System Showcase
-
-<div align="center">
-
-### 🗺️ Autonomous Waypoint & Geofence Planning
-![Autonomous Mission Planner](docs/screenshots/mission_planner.jpg)
-*Visual route construction with dynamic waypoint parameters, speed corridors, and altitude constraints.*
-
-<br/>
-
-### 📊 Tactical Avionics & Live Telemetry Diagnostics
-![Flight Telemetry & HUD](docs/screenshots/pfd_telemetry.jpg)
-*Real-time flight instrumentation, PID response curves, and battery telemetry sync.*
-
-</div>
+- 🗺️ **Autonomous Mission Planning:** Visual waypoint survey grids on high-resolution satellite maps with real-time route computation, trigger intervals, and altitude reference modes (AGL / AMSL / Terrain).
+- 📡 **Datalink & MAVLink Console:** Built-in SITL 6-DOF simulation engine, serial COM / UDP telemetry streams, packet health metrics (latency, loss rate, RX counter), and live system message logs.
+- ⚙️ **EEPROM Parameter Tree:** Comprehensive live parameter tuning across flight sub-systems (Battery & Power, Waypoint & Nav, Attitude & PID, Failsafe & RTL, Motors & ESC, EKF & Sensors).
+- 📷 **Payload & Lighting Hardware Deck:** Hardware toggles for Electronic Image Stabilization (EIS), Dynamic HDR, Thermal false-color overlay, Night Vision IR strobe, and gimbal searchlights.
+- 📋 **Flight Logs & Diagnostic Alerts:** Timestamped, severity-graded event timeline (Info, Notice, Warning, Critical) with black-box session playback.
+- ⚡ **Rapid Tactical Controls:** Hardware keyboard override shortcuts for emergency motor stop, throttle scaling, and roll trim.
 
 ---
 
-## 🕹️ Cockpit Keyboard Shortcuts
+## 📸 Interface Tour
 
-For rapid tactical response during flight operations, SAFAR GCS includes direct keyboard bindings:
+### 1. Autonomous Waypoint & Survey Mission Planner
+Full visual route generation with payload sensors (RGB 4K, Thermal, LiDAR), crosshatch grids, turn coordination, and live battery draw estimates.
 
-| Hotkey | Action | Operational Description |
+![Mission Planner](docs/screenshots/mission_planner.png)
+
+---
+
+### 2. Live EEPROM Parameter Editor
+Searchable parameter registry with validation ranges, unit specifications, and default reset triggers.
+
+![Parameter Editor](docs/screenshots/parameter_editor.png)
+
+---
+
+### 3. Datalink Console & MAVLink Stream
+Telemetry protocol selection, communication health monitor (latency, packet loss), and raw packet message logs.
+
+![Datalink Console](docs/screenshots/datalink_console.png)
+
+---
+
+### 4. Camera & Lighting Control Deck
+Live attitude and acceleration telemetry plots paired with camera sensor toggles and gimbal illumination controls.
+
+![Camera and Lighting Controls](docs/screenshots/camera_lighting_controls.png)
+
+---
+
+### 5. System Flight Logs & Event Alerts
+Chronological event logging with color-coded severity indicators for flight auditing and safety inspections.
+
+![System Flight Logs](docs/screenshots/flight_logs_events.png)
+
+---
+
+## 🕹️ Keyboard Controls & Safety Shortcuts
+
+| Shortcut | Function | Description |
 | :--- | :--- | :--- |
-| <kbd>Space</kbd> | **Emergency Motor Kill** | Immediate motor cut-off in critical emergencies |
-| <kbd>W</kbd> / <kbd>↑</kbd> | **Increase Throttle** | Increment vehicle throttle by +5% |
-| <kbd>S</kbd> / <kbd>↓</kbd> | **Decrease Throttle** | Decrement vehicle throttle by -5% |
+| <kbd>Space</kbd> | **Emergency Motor Cut** | Immediate motor disarm in critical failsafe events |
+| <kbd>W</kbd> / <kbd>↑</kbd> | **Throttle Up** | Increment vehicle throttle (+5%) |
+| <kbd>S</kbd> / <kbd>↓</kbd> | **Throttle Down** | Decrement vehicle throttle (-5%) |
 | <kbd>A</kbd> / <kbd>←</kbd> | **Roll Left** | Tactical roll trim adjustment |
 | <kbd>D</kbd> / <kbd>→</kbd> | **Roll Right** | Tactical roll trim adjustment |
 
 ---
 
-## 📥 Download Pre-Built Executables
+## 📥 Standalone Windows Installation (.exe)
 
-Pre-compiled, standalone 64-bit Windows releases are packaged automatically with each update.
+Pre-built portable executables for 64-bit Windows are generated automatically for each release:
 
-1. Navigate to the **[GitHub Releases](https://github.com/sajidsam/subRocket/releases)** page.
+1. Visit the **[GitHub Releases](https://github.com/sajidsam/subRocket/releases)** page.
 2. Download the latest **`SAFAR_GCS_vX.X.X_Windows_x64.zip`**.
-3. Extract the archive anywhere on your machine and double-click `rocket_controller.exe` to run.
+3. Extract the ZIP archive and run `rocket_controller.exe`.
 
 ---
 
-## 🛠️ Building & Running from Source
+## 🛠️ Development & Local Build
 
-### Prerequisites
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.10+ recommended)
+### Requirements
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.10+)
 - [Git](https://git-scm.com/)
 
-### 1. Clone & Install Dependencies
+### 1. Clone & Setup
 ```bash
 git clone https://github.com/sajidsam/subRocket.git
 cd subRocket
 flutter pub get
 ```
 
-### 2. Run in Development Mode
+### 2. Launch Development Server
 ```bash
 # Run on Windows Desktop
 flutter run -d windows
 
-# Run in Browser / Web
+# Run in Chrome / Web
 flutter run -d chrome
 ```
 
-### 3. Build Production Executable
+### 3. Build Release
 ```bash
-# Build standalone Windows x64 release
+# Build standalone Windows 64-bit release
 flutter build windows --release
 
-# Or package portable ZIP with the bundled helper script:
+# Or package the release ZIP with the helper script:
 .\scripts\build_release_zip.ps1
 ```
 
-The generated executable will be output to:
-`build/windows/x64/runner/Release/`
+The output will be located in: `build/windows/x64/runner/Release/`
 
 ---
 
-## 🏗️ Architecture & Technology Stack
+## 🏛️ System Architecture
 
-| Layer | Technologies / Libraries | Functionality |
-| :--- | :--- | :--- |
-| **Framework** | Flutter 3.x / Dart | Cross-platform UI engine & rendering pipeline |
-| **State Management** | `provider` | Reactive state propagation across avionics panels |
-| **Mapping Engine** | `flutter_map`, `latlong2` | High-resolution satellite tiles, GPS tracking & geofencing |
-| **Telemetry Charts** | `fl_chart` | Real-time PID damping & battery discharge curves |
-| **Telemetry Protocol** | Custom MAVLink & Serial Bridge | Bidirectional communications with flight controller |
-| **Persistence** | `hive`, `hive_flutter` | High-speed local caching for logs & configuration parameters |
-| **Automation** | GitHub Actions CI/CD | Headless cloud compilation & automatic Windows release packaging |
+```
+lib/
+├── core/
+│   ├── models/            # VehicleState, ParameterItem, FlightMode, LogEntry
+│   ├── presentation/      # Tactical theme, HUD PFD, Status & Emergency panels
+│   └── services/          # MavlinkService, ParameterService, FlightLoggerService
+└── features/
+    ├── dashboard/         # Cockpit viewfinder, tactical compass, drone status cards
+    ├── mission_planner/   # Waypoint route planning, geofencing & payload configs
+    ├── parameters/        # EEPROM parameter tree and live editor
+    ├── datalink/          # Telemetry protocol selection & MAVLink packet console
+    ├── calibration/       # Sensor calibration wizards (Compass, Gyro, Accel)
+    ├── flight_logs/       # Blackbox flight session logger and event audits
+    └── telemetry/         # High-frequency attitude, battery, and signal charts
+```
 
 ---
 
-## 📄 License & Attribution
+## 📄 License
 
-Distributed under the **MIT License**. Engineered for aerospace research, UAV ground operations, and autonomous vehicle tracking.
+This project is licensed under the **MIT License**.
