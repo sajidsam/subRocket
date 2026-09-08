@@ -7,6 +7,7 @@ import 'package:rocket_controller/core/services/mavlink_service.dart';
 import 'package:rocket_controller/core/services/parameter_service.dart';
 import 'package:rocket_controller/core/services/speech_service.dart';
 import 'package:rocket_controller/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:rocket_controller/features/dashboard/presentation/widgets/ai_vision_overlay.dart';
 import 'package:rocket_controller/features/dashboard/presentation/widgets/camera_viewfinder_card.dart';
 import 'package:rocket_controller/features/dashboard/presentation/widgets/drone_status_card.dart';
 import 'package:rocket_controller/features/dashboard/presentation/widgets/flight_camera_deck_card.dart';
@@ -72,17 +73,20 @@ void main() {
       expect(find.text('88%'), findsOneWidget);
     });
 
-    testWidgets('CameraViewfinderCard toggles HDR and Pause states', (WidgetTester tester) async {
+    testWidgets('CameraViewfinderCard toggles HDR, Pause, and AI Detection states', (WidgetTester tester) async {
       await tester.pumpWidget(createTestableWidget(const CameraViewfinderCard()));
       await tester.pump();
 
       expect(find.text('HDR'), findsOneWidget);
+      expect(find.text('AI DETECT'), findsOneWidget);
       expect(find.text('H2.85'), findsOneWidget);
 
-      await tester.tap(find.text('HDR'));
+      // Tap AI DETECT button to activate YOLOv11-Aero object detection
+      await tester.tap(find.text('AI DETECT'));
       await tester.pump();
 
-      expect(find.text('HDR'), findsOneWidget);
+      expect(find.text('AI DETECT'), findsOneWidget);
+      expect(find.byType(AiVisionOverlay), findsOneWidget);
     });
 
     testWidgets('CameraViewfinderCard retains navigation when isDispActive is false', (WidgetTester tester) async {

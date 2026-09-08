@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:provider/provider.dart';
+import '../../../../core/models/ai_detection_model.dart';
 import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
+import '../../../../core/services/ai_detector_service.dart';
+import 'ai_vision_overlay.dart';
 import 'ip_camera_setup_dialog.dart';
 import 'ip_webcam_stream_view.dart';
 import 'tactical_compass_card.dart';
@@ -43,6 +46,7 @@ class CameraViewfinderCard extends StatefulWidget {
 
 class _CameraViewfinderCardState extends State<CameraViewfinderCard> with SingleTickerProviderStateMixin {
   bool _isHdrActive = true;
+  bool _isAiDetectActive = false;
   bool _isPaused = false;
   bool _isRecording = true;
   int _recordSeconds = 129; // 02:09 initial
@@ -143,6 +147,13 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
               child: TacticalCompassCard(isOverlay: true),
             ),
 
+            // AI SOTA Object Detection Overlay (YOLOv11-Aero Core)
+            if (_isAiDetectActive)
+              AiVisionOverlay(
+                detections: AiDetectorService.getDetections(_animController.value),
+                animation: _animController,
+              ),
+
             // Non-nav HUD Overlays (Toggled on/off with DISP button)
             if (widget.isDispActive) ...[
               // Rule of Thirds Grid Overlay
@@ -157,32 +168,78 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // HDR Pill Button
-                    InkWell(
-                      borderRadius: BorderRadius.circular(6),
-                      onTap: () => setState(() => _isHdrActive = !_isHdrActive),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _isHdrActive
-                              ? GcsColors.cardSurfaceLight.withValues(alpha: 0.85)
-                              : Colors.black.withValues(alpha: 0.5),
+                    // Top Buttons Row: HDR + AI DETECT (YOLOv11-Aero SOTA)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // HDR Pill Button
+                        InkWell(
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: _isHdrActive ? Colors.white54 : GcsColors.border,
-                            width: 1,
+                          onTap: () => setState(() => _isHdrActive = !_isHdrActive),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _isHdrActive
+                                  ? GcsColors.cardSurfaceLight.withValues(alpha: 0.85)
+                                  : Colors.black.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: _isHdrActive ? Colors.white54 : GcsColors.border,
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              'HDR',
+                              style: TextStyle(
+                                color: _isHdrActive ? Colors.white : GcsColors.textMuted,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ),
                         ),
-                        child: Text(
-                          'HDR',
-                          style: TextStyle(
-                            color: _isHdrActive ? Colors.white : GcsColors.textMuted,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
+                        const SizedBox(width: 8),
+
+                        // AI Object Detection Toggle Button (YOLOv11-Aero SOTA)
+                        InkWell(
+                          borderRadius: BorderRadius.circular(6),
+                          onTap: () => setState(() => _isAiDetectActive = !_isAiDetectActive),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _isAiDetectActive
+                                  ? GcsColors.cyanAccent.withValues(alpha: 0.25)
+                                  : Colors.black.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: _isAiDetectActive ? GcsColors.cyanAccent : GcsColors.border,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.auto_awesome,
+                                  size: 11,
+                                  color: _isAiDetectActive ? GcsColors.cyanAccent : GcsColors.textMuted,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'AI DETECT',
+                                  style: TextStyle(
+                                    color: _isAiDetectActive ? GcsColors.cyanAccent : GcsColors.textMuted,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                     const SizedBox(height: 10),
 
