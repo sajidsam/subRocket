@@ -46,10 +46,10 @@ class VehicleState extends ChangeNotifier {
 
   // Camera & Video Link
   bool isCameraStreamConnected = false;
-  String cameraStreamUrl = 'http://192.168.0.105:8080/video';
-  bool isUsingSimulatedCamera = true;
+  String cameraStreamUrl = 'http://10.10.60.95:8080/video';
+  bool isUsingSimulatedCamera = false;
   double cameraFps = 0.0;
-  String cameraStatusText = 'Procedural Simulation';
+  String cameraStatusText = 'STANDBY';
 
   // Arm & Flight Mode
   bool isArmed = false;

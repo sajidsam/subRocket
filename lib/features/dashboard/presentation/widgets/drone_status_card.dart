@@ -416,7 +416,7 @@ class _DroneStatusCardState extends State<DroneStatusCard> {
       borderRadius: BorderRadius.circular(6),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         width: 66,
         decoration: BoxDecoration(
           color: isActive ? Colors.white.withValues(alpha: 0.1) : const Color(0xFF181B22),

@@ -77,40 +77,34 @@ class _JcaSidebarState extends State<JcaSidebar> {
                   ),
                   _buildNavIcon(
                     index: 1,
-                    icon: Icons.gps_fixed,
-                    tooltip: 'Target & Gimbal Tracking',
+                    icon: Icons.photo_library_outlined,
+                    tooltip: 'Flight Logs & Blackbox',
                     onTap: () => widget.onDestinationSelected(1),
                   ),
                   _buildNavIcon(
                     index: 2,
-                    icon: Icons.photo_library_outlined,
-                    tooltip: 'Flight Logs & Blackbox',
+                    icon: Icons.wb_sunny_outlined,
+                    tooltip: 'Camera & Lighting Controls',
                     onTap: () => widget.onDestinationSelected(2),
                   ),
                   _buildNavIcon(
                     index: 3,
-                    icon: Icons.wb_sunny_outlined,
-                    tooltip: 'Camera & Lighting Controls',
+                    icon: Icons.settings_outlined,
+                    tooltip: 'Vehicle Parameters & Calibration',
                     onTap: () => widget.onDestinationSelected(3),
                   ),
                   _buildNavIcon(
                     index: 4,
-                    icon: Icons.settings_outlined,
-                    tooltip: 'Vehicle Parameters & Calibration',
+                    icon: Icons.notifications_none_outlined,
+                    badgeCount: vehicle.messageLog.length,
+                    tooltip: 'System Alerts Log',
                     onTap: () => widget.onDestinationSelected(4),
                   ),
                   _buildNavIcon(
                     index: 5,
-                    icon: Icons.notifications_none_outlined,
-                    badgeCount: vehicle.messageLog.length,
-                    tooltip: 'System Alerts Log',
-                    onTap: () => widget.onDestinationSelected(5),
-                  ),
-                  _buildNavIcon(
-                    index: 6,
                     icon: Icons.flag_outlined,
                     tooltip: 'Mission Planner & Waypoints',
-                    onTap: () => widget.onDestinationSelected(6),
+                    onTap: () => widget.onDestinationSelected(5),
                   ),
                 ],
               ),
@@ -122,15 +116,15 @@ class _JcaSidebarState extends State<JcaSidebar> {
           Tooltip(
             message: 'Datalink & MAVLink Console',
             child: GestureDetector(
-              onTap: () => widget.onDestinationSelected(7),
+              onTap: () => widget.onDestinationSelected(6),
               child: Container(
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: widget.selectedIndex == 7 ? GcsColors.aviationBlue.withValues(alpha: 0.3) : GcsColors.cardSurfaceLight,
+                  color: widget.selectedIndex == 6 ? GcsColors.aviationBlue.withValues(alpha: 0.3) : GcsColors.cardSurfaceLight,
                   border: Border.all(
-                    color: widget.selectedIndex == 7
+                    color: widget.selectedIndex == 6
                         ? GcsColors.aviationBlue
                         : (vehicle.isConnected ? GcsColors.greenActive : GcsColors.textMuted),
                     width: 1.5,
@@ -138,7 +132,7 @@ class _JcaSidebarState extends State<JcaSidebar> {
                 ),
                 child: Icon(
                   Icons.person,
-                  color: widget.selectedIndex == 7 ? Colors.white : GcsColors.textSecondary,
+                  color: widget.selectedIndex == 6 ? Colors.white : GcsColors.textSecondary,
                   size: 18,
                 ),
               ),
@@ -211,7 +205,7 @@ class _JcaSidebarState extends State<JcaSidebar> {
                   color: isSelected ? GcsColors.textPrimary : GcsColors.textSecondary,
                 ),
               ),
-              if (badgeCount > 0 && index == 5)
+              if (badgeCount > 0 && index == 4)
                 Positioned(
                   top: -2,
                   right: -2,

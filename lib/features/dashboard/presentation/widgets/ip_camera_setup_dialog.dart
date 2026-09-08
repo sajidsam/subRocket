@@ -12,14 +12,12 @@ class IpCameraSetupDialog extends StatefulWidget {
 
 class _IpCameraSetupDialogState extends State<IpCameraSetupDialog> {
   late TextEditingController _urlController;
-  late bool _useSimulated;
 
   @override
   void initState() {
     super.initState();
     final vehicle = context.read<VehicleState>();
     _urlController = TextEditingController(text: vehicle.cameraStreamUrl);
-    _useSimulated = vehicle.isUsingSimulatedCamera;
   }
 
   @override
@@ -31,7 +29,6 @@ class _IpCameraSetupDialogState extends State<IpCameraSetupDialog> {
   void _applyQuickPreset(String preset) {
     setState(() {
       _urlController.text = preset;
-      _useSimulated = false;
     });
   }
 
@@ -79,7 +76,7 @@ class _IpCameraSetupDialogState extends State<IpCameraSetupDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
                       Text(
-                        'CAMERA STREAM LINK SETUP',
+                        'IP CAMERA STREAM LINK SETUP',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
@@ -90,7 +87,7 @@ class _IpCameraSetupDialogState extends State<IpCameraSetupDialog> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'Cockpit Viewfinder Video Feed Source',
+                        'Live Video Feed URL (MJPEG / HTTP Stream / Snapshot)',
                         style: TextStyle(fontSize: 10, color: GcsColors.textSecondary),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -109,99 +106,72 @@ class _IpCameraSetupDialogState extends State<IpCameraSetupDialog> {
             const Divider(color: GcsColors.border),
             const SizedBox(height: 12),
 
-            // Video Source Selector (Radio Cards)
-            Row(
+            // Stream URL Input Field
+            const Text(
+              'CAMERA STREAM / SNAPSHOT URL',
+              style: TextStyle(
+                color: GcsColors.textSecondary,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'monospace',
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _urlController,
+              style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'http://10.10.60.95:8080/video',
+                hintStyle: const TextStyle(color: GcsColors.textMuted, fontSize: 12),
+                fillColor: GcsColors.surfaceDark,
+                filled: true,
+                isDense: true,
+                prefixIcon: const Icon(Icons.link, color: GcsColors.cyanAccent, size: 18),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: GcsColors.border)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: GcsColors.border)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: GcsColors.cyanAccent, width: 1.5)),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Quick Presets Wrap
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Expanded(
-                  child: _buildSourceCard(
-                    title: 'SIMULATED',
-                    subtitle: 'Procedural Terrain',
-                    icon: Icons.landscape_outlined,
-                    isSelected: _useSimulated,
-                    onTap: () => setState(() => _useSimulated = true),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildSourceCard(
-                    title: 'IP WEBCAM',
-                    subtitle: 'Phone Live Stream',
-                    icon: Icons.phone_android_rounded,
-                    isSelected: !_useSimulated,
-                    onTap: () => setState(() => _useSimulated = false),
-                  ),
-                ),
+                const Text('Presets: ', style: TextStyle(color: GcsColors.textSecondary, fontSize: 10)),
+                _buildPresetChip('IP Webcam (:8080/video)', 'http://10.10.60.95:8080/video'),
+                _buildPresetChip('Snapshot (:8080/shot.jpg)', 'http://10.10.60.95:8080/shot.jpg'),
+                _buildPresetChip('DroidCam (:4747/video)', 'http://10.10.60.95:4747/video'),
+                _buildPresetChip('ESP32-CAM (:81/stream)', 'http://10.10.60.95:81/stream'),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            if (!_useSimulated) ...[
-              // Stream URL Input Field
-              const Text(
-                'STREAM URL (MJPEG / HTTP)',
-                style: TextStyle(
-                  color: GcsColors.textSecondary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'monospace',
-                ),
+            // Helper tip
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: GcsColors.surfaceDark,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: GcsColors.borderSubtle),
               ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _urlController,
-                style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'http://192.168.0.105:8080/video',
-                  hintStyle: const TextStyle(color: GcsColors.textMuted, fontSize: 12),
-                  fillColor: GcsColors.surfaceDark,
-                  filled: true,
-                  isDense: true,
-                  prefixIcon: const Icon(Icons.link, color: GcsColors.cyanAccent, size: 18),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: GcsColors.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: GcsColors.border)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: GcsColors.cyanAccent, width: 1.5)),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Quick Presets Wrap
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  const Text('Quick Presets: ', style: TextStyle(color: GcsColors.textSecondary, fontSize: 10)),
-                  _buildPresetChip('IP Webcam (:8080)', 'http://192.168.0.105:8080/video'),
-                  _buildPresetChip('Snapshot (:8080)', 'http://192.168.0.105:8080/shot.jpg'),
-                  _buildPresetChip('DroidCam (:4747)', 'http://192.168.0.105:4747/video'),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Icon(Icons.info_outline, color: GcsColors.goldAccent, size: 16),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'To stream from your phone: Install "IP Webcam" on Android, open the app, scroll to bottom and tap "Start server". Enter the IP address shown on your phone screen above (e.g. http://192.168.0.x:8080/video).',
+                      style: TextStyle(color: GcsColors.textSecondary, fontSize: 10, height: 1.3),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 14),
-
-              // Helper tip
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: GcsColors.surfaceDark,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: GcsColors.borderSubtle),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Icon(Icons.info_outline, color: GcsColors.goldAccent, size: 16),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Open "IP Webcam" app on your Android/iOS phone, scroll to bottom and tap "Start server". Copy the IPv4 address shown on your screen (e.g. http://192.168.0.x:8080/video).',
-                        style: TextStyle(color: GcsColors.textSecondary, fontSize: 10, height: 1.3),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
+            ),
+            const SizedBox(height: 16),
 
             // Current Status Readout
             Container(
@@ -213,7 +183,7 @@ class _IpCameraSetupDialogState extends State<IpCameraSetupDialog> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('CURRENT STATUS', style: TextStyle(color: GcsColors.textSecondary, fontSize: 10, fontFamily: 'monospace')),
+                  const Text('LINK STATUS', style: TextStyle(color: GcsColors.textSecondary, fontSize: 10, fontFamily: 'monospace')),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -222,18 +192,14 @@ class _IpCameraSetupDialogState extends State<IpCameraSetupDialog> {
                         height: 7,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: vehicle.isUsingSimulatedCamera
-                              ? GcsColors.goldAccent
-                              : (vehicle.isCameraStreamConnected ? GcsColors.greenActive : GcsColors.alertRed),
+                          color: vehicle.isCameraStreamConnected ? GcsColors.greenActive : GcsColors.warningOrange,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        vehicle.isUsingSimulatedCamera ? 'SIMULATION MODE' : (vehicle.isCameraStreamConnected ? 'STREAM ONLINE' : 'DISCONNECTED'),
+                        vehicle.isCameraStreamConnected ? 'ONLINE (${vehicle.cameraFps.toStringAsFixed(0)} FPS)' : 'CONNECTING / STANDBY',
                         style: TextStyle(
-                          color: vehicle.isUsingSimulatedCamera
-                              ? GcsColors.goldAccent
-                              : (vehicle.isCameraStreamConnected ? GcsColors.greenActive : GcsColors.alertRed),
+                          color: vehicle.isCameraStreamConnected ? GcsColors.greenActive : GcsColors.warningOrange,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'monospace',
@@ -258,7 +224,7 @@ class _IpCameraSetupDialogState extends State<IpCameraSetupDialog> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('CANCEL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  child: const Text('CLOSE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
@@ -268,81 +234,25 @@ class _IpCameraSetupDialogState extends State<IpCameraSetupDialog> {
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  icon: const Icon(Icons.check, size: 16),
+                  icon: const Icon(Icons.videocam, size: 16),
                   label: const Text('CONNECT & APPLY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                   onPressed: () {
                     vehicle.updateCameraStream(
                       url: _urlController.text.trim(),
-                      useSimulated: _useSimulated,
+                      useSimulated: false,
                       isConnected: false,
-                      status: _useSimulated ? 'Procedural Simulation' : 'Connecting...',
+                      status: 'Connecting to IP Camera...',
                     );
                     Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(_useSimulated
-                            ? 'Switched to Procedural Mountain Simulation'
-                            : 'Connected to IP Camera Stream: ${_urlController.text.trim()}'),
+                        content: Text('Connecting to Camera Stream: ${_urlController.text.trim()}'),
                         backgroundColor: GcsColors.cardSurfaceLight,
                       ),
                     );
                   },
                 ),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSourceCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? GcsColors.aviationBlue.withValues(alpha: 0.25) : GcsColors.surfaceDark,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? GcsColors.cyanAccent : GcsColors.border,
-            width: isSelected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: isSelected ? GcsColors.cyanAccent : GcsColors.textSecondary, size: 24),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : GcsColors.textSecondary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: isSelected ? GcsColors.cyanAccent : GcsColors.textMuted,
-                      fontSize: 9,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),

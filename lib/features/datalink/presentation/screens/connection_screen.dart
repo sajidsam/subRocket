@@ -466,7 +466,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
             Icon(Icons.videocam, color: GcsColors.cyanAccent, size: 16),
             SizedBox(width: 6),
             Text(
-              'CAMERA STREAM SOURCE',
+              'IP CAMERA STREAM SETUP',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -479,78 +479,14 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         ),
         const SizedBox(height: 12),
 
-        // Radio selector
-        Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: () {
-                  vehicle.updateCameraStream(
-                    url: _cameraUrlController.text.trim(),
-                    useSimulated: true,
-                    isConnected: false,
-                    status: 'Procedural Simulation',
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: vehicle.isUsingSimulatedCamera ? GcsColors.aviationBlue.withValues(alpha: 0.3) : GcsColors.surfaceDark,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: vehicle.isUsingSimulatedCamera ? GcsColors.cyanAccent : GcsColors.border,
-                    ),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'SIMULATED',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: InkWell(
-                onTap: () {
-                  vehicle.updateCameraStream(
-                    url: _cameraUrlController.text.trim(),
-                    useSimulated: false,
-                    isConnected: false,
-                    status: 'Connecting to IP Camera...',
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: !vehicle.isUsingSimulatedCamera ? GcsColors.cyanAccent.withValues(alpha: 0.25) : GcsColors.surfaceDark,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: !vehicle.isUsingSimulatedCamera ? GcsColors.cyanAccent : GcsColors.border,
-                    ),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'IP WEBCAM (LIVE)',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-
         // Stream URL input
         TextField(
           controller: _cameraUrlController,
           style: const TextStyle(fontFamily: 'monospace', color: Colors.white, fontSize: 12),
           decoration: InputDecoration(
-            labelText: 'IP WEBCAM STREAM URL',
+            labelText: 'LIVE CAMERA STREAM / SNAPSHOT URL',
             labelStyle: const TextStyle(color: GcsColors.textSecondary, fontFamily: 'monospace', fontSize: 11),
-            hintText: 'http://192.168.0.105:8080/video',
+            hintText: 'http://10.10.60.95:8080/video',
             isDense: true,
             fillColor: GcsColors.surfaceDark,
             filled: true,
@@ -566,58 +502,39 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
           spacing: 4,
           runSpacing: 4,
           children: [
-            _buildPresetChip('IP Webcam (:8080)', 'http://192.168.0.105:8080/video'),
-            _buildPresetChip('Snapshot (:8080)', 'http://192.168.0.105:8080/shot.jpg'),
-            _buildPresetChip('DroidCam (:4747)', 'http://192.168.0.105:4747/video'),
+            _buildPresetChip('IP Webcam (:8080/video)', 'http://10.10.60.95:8080/video'),
+            _buildPresetChip('Snapshot (:8080/shot.jpg)', 'http://10.10.60.95:8080/shot.jpg'),
+            _buildPresetChip('DroidCam (:4747/video)', 'http://10.10.60.95:4747/video'),
+            _buildPresetChip('ESP32-CAM (:81/stream)', 'http://10.10.60.95:81/stream'),
           ],
         ),
         const SizedBox(height: 14),
 
-        // Connect / Disconnect Camera Button
-        if (vehicle.isUsingSimulatedCamera)
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: GcsColors.greenActive,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            icon: const Icon(Icons.videocam, size: 16),
-            label: const Text('CONNECT CAMERA FEED', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-            onPressed: () {
-              vehicle.updateCameraStream(
-                url: _cameraUrlController.text.trim(),
-                useSimulated: false,
-                isConnected: false,
-                status: 'CONNECTING...',
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Connecting to IP Camera: ${_cameraUrlController.text.trim()}')),
-              );
-            },
-          )
-        else
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: GcsColors.alertRed,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            icon: const Icon(Icons.videocam_off, size: 16),
-            label: const Text('DISCONNECT CAMERA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-            onPressed: () {
-              vehicle.updateCameraStream(
-                url: _cameraUrlController.text.trim(),
-                useSimulated: true,
-                isConnected: false,
-                status: 'Procedural Simulation',
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Camera stream disconnected. Reverted to static view.')),
-              );
-            },
+        // Connect / Reconnect Camera Button
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: vehicle.isCameraStreamConnected ? GcsColors.cyanAccent : GcsColors.greenActive,
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
+          icon: Icon(vehicle.isCameraStreamConnected ? Icons.refresh : Icons.videocam, size: 16),
+          label: Text(
+            vehicle.isCameraStreamConnected ? 'RELOAD CAMERA STREAM' : 'CONNECT CAMERA FEED',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+          ),
+          onPressed: () {
+            vehicle.updateCameraStream(
+              url: _cameraUrlController.text.trim(),
+              useSimulated: false,
+              isConnected: false,
+              status: 'CONNECTING...',
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Connecting to IP Camera: ${_cameraUrlController.text.trim()}')),
+            );
+          },
+        ),
 
         const SizedBox(height: 16),
         const Divider(color: GcsColors.border),
@@ -642,8 +559,8 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              _buildMetricRow('FEED MODE', vehicle.isUsingSimulatedCamera ? 'SIMULATION' : 'IP WEBCAM', vehicle.isUsingSimulatedCamera ? GcsColors.goldAccent : GcsColors.cyanAccent),
-              _buildMetricRow('LINK STATUS', vehicle.isUsingSimulatedCamera ? 'STANDBY' : (vehicle.isCameraStreamConnected ? 'ONLINE' : 'CONNECTING'), vehicle.isCameraStreamConnected ? GcsColors.greenActive : GcsColors.warningOrange),
+              _buildMetricRow('FEED TYPE', 'IP LIVE STREAM / MJPEG', GcsColors.cyanAccent),
+              _buildMetricRow('LINK STATUS', vehicle.isCameraStreamConnected ? 'ONLINE' : 'CONNECTING', vehicle.isCameraStreamConnected ? GcsColors.greenActive : GcsColors.warningOrange),
               _buildMetricRow('FPS RATE', vehicle.cameraFps > 0 ? '${vehicle.cameraFps.toStringAsFixed(0)} FPS' : '--', GcsColors.cyanAccent),
               _buildMetricRow('TARGET URL', vehicle.cameraStreamUrl, Colors.white),
             ],

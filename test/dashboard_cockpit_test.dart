@@ -203,13 +203,13 @@ void main() {
       expect(find.byType(JcaSidebar), findsOneWidget);
       expect(find.byType(CameraViewfinderCard), findsOneWidget);
 
-      // Tap Target Tracking icon (gps_fixed, index 1)
-      await tester.tap(find.byIcon(Icons.gps_fixed));
+      // Tap Flight Logs icon (photo_library_outlined, index 1)
+      await tester.tap(find.byIcon(Icons.photo_library_outlined));
       await tester.pump(const Duration(milliseconds: 600));
 
       // JcaSidebar is still present and fixed
       expect(find.byType(JcaSidebar), findsOneWidget);
-      // Target tracking view is now loaded in the outlet
+      // Flight logs view is now loaded in the outlet
       expect(find.byType(CameraViewfinderCard), findsNothing);
 
       // Tap SAFAR badge to return home
@@ -259,7 +259,7 @@ void main() {
       expect(find.text('4K . 19.67FPS'), findsOneWidget);
     });
 
-    testWidgets('ConnectionScreen IP Camera tab connects and disconnects feed smoothly', (WidgetTester tester) async {
+    testWidgets('ConnectionScreen IP Camera tab connects and reloads feed smoothly', (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1920, 1080);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -282,17 +282,9 @@ void main() {
       await tester.tap(find.text('CONNECT CAMERA FEED'));
       await tester.pump();
 
-      // Vehicle state is now in streaming mode and DISCONNECT CAMERA button is visible
+      // Vehicle state is in direct streaming mode
       expect(vehicleState.isUsingSimulatedCamera, isFalse);
-      expect(find.text('DISCONNECT CAMERA'), findsOneWidget);
-
-      // Tap DISCONNECT CAMERA
-      await tester.tap(find.text('DISCONNECT CAMERA'));
-      await tester.pump();
-
-      // Reverted to simulated static picture
-      expect(vehicleState.isUsingSimulatedCamera, isTrue);
-      expect(find.text('CONNECT CAMERA FEED'), findsOneWidget);
+      expect(vehicleState.cameraStreamUrl, isNotEmpty);
     });
   });
 }

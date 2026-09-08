@@ -32,7 +32,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final FocusNode _focusNode = FocusNode();
-  final MapController _targetMapController = MapController();
   final MapController _primaryMapController = MapController();
   double _currentMapZoom = 15.0;
   int _selectedNavIndex = 0;
@@ -150,42 +149,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
 
       case 1:
-        return KeyedSubtree(
-          key: const ValueKey('target_tracking_view'),
-          child: _buildTargetTrackingView(vehicle, mavlink),
-        );
-
-      case 2:
         return const KeyedSubtree(
           key: ValueKey('flight_logs_view'),
           child: FlightLogsScreen(),
         );
 
-      case 3:
+      case 2:
         return KeyedSubtree(
           key: const ValueKey('exposure_graphs_view'),
           child: _buildExposureAndGraphsView(),
         );
 
-      case 4:
+      case 3:
         return const KeyedSubtree(
           key: ValueKey('parameter_editor_view'),
           child: ParameterEditorScreen(),
         );
 
-      case 5:
+      case 4:
         return KeyedSubtree(
           key: const ValueKey('system_alerts_view'),
           child: _buildSystemAlertsView(vehicle),
         );
 
-      case 6:
+      case 5:
         return const KeyedSubtree(
           key: ValueKey('mission_planner_view'),
           child: MissionPlannerScreen(),
         );
 
-      case 7:
+      case 6:
         return const KeyedSubtree(
           key: ValueKey('connection_view'),
           child: ConnectionScreen(),
@@ -248,83 +241,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: DroneStatusCard(),
         ),
       ],
-    );
-  }
-
-  // View 1: Tactical Target Tracking & Primary Flight Display
-  Widget _buildTargetTrackingView(VehicleState vehicle, MavlinkService mavlink) {
-    return Container(
-      key: const ValueKey('target_tracking_view'),
-      decoration: BoxDecoration(
-        color: GcsColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GcsColors.border),
-      ),
-      child: Stack(
-        children: [
-          // Tactical Map
-          FlutterMap(
-            mapController: _targetMapController,
-            options: MapOptions(
-              initialCenter: vehicle.currentLocation ?? vehicle.homeLocation,
-              initialZoom: 15.0,
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.rocketcontroller.gcs',
-              ),
-              Container(color: Colors.black.withValues(alpha: 0.7)),
-              MarkerLayer(
-                markers: [
-                  Marker(
-                    point: vehicle.currentLocation ?? vehicle.homeLocation,
-                    width: 44,
-                    height: 44,
-                    child: Transform.rotate(
-                      angle: vehicle.yaw * (pi / 180.0),
-                      child: const Icon(
-                        Icons.navigation,
-                        color: GcsColors.cyanAccent,
-                        size: 38,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          // PFD Overlay on Left
-          Positioned(
-            top: 16,
-            left: 16,
-            child: SizedBox(
-              width: 320,
-              child: Column(
-                children: const [
-                  HudPrimaryFlightDisplay(width: 320, height: 260),
-                  SizedBox(height: 10),
-                  TelemetryStrip(),
-                ],
-              ),
-            ),
-          ),
-
-          // Action bar & joystick on bottom
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: Row(
-              children: const [
-                EmergencyActionPanel(),
-                SizedBox(width: 12),
-                QuickControlPad(),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 

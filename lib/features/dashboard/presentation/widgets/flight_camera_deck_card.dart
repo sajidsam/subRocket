@@ -566,15 +566,10 @@ class _FlightCameraDeckCardState extends State<FlightCameraDeckCard> with Single
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 1. Live Camera Feed (IP Webcam) or Mountain Landscape Background
-        if (vehicle.isUsingSimulatedCamera)
-          CustomPaint(
-            painter: MountainLandscapePainter(animation: _animController),
-          )
-        else
-          IpWebcamStreamView(
-            streamUrl: vehicle.cameraStreamUrl,
-          ),
+        // 1. Live Camera Feed (IP Webcam Stream)
+        IpWebcamStreamView(
+          streamUrl: vehicle.cameraStreamUrl,
+        ),
 
         // 2. Mini Horizon Reticle
         Center(

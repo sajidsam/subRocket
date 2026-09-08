@@ -89,7 +89,7 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                     decoration: const BoxDecoration(
                       color: GcsColors.surfaceCard,
                       border: Border(bottom: BorderSide(color: GcsColors.border)),
@@ -99,19 +99,19 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
                       children: [
                         Row(
                           children: const [
-                            Icon(Icons.history, color: _orangeAccent, size: 18),
-                            SizedBox(width: 6),
-                            Text('RECORDED SESSIONS', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 11, color: Colors.white)),
+                            Icon(Icons.history, color: _orangeAccent, size: 16),
+                            SizedBox(width: 4),
+                            Text('RECORDED SESSIONS', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 10, color: Colors.white)),
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
                             color: _orangeAccent.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(color: _orangeAccent.withValues(alpha: 0.4)),
                           ),
-                          child: Text('${sessions.length}', style: const TextStyle(fontWeight: FontWeight.bold, color: _orangeAccent, fontFamily: 'monospace', fontSize: 11)),
+                          child: Text('${sessions.length}', style: const TextStyle(fontWeight: FontWeight.bold, color: _orangeAccent, fontFamily: 'monospace', fontSize: 10)),
                         ),
                       ],
                     ),
@@ -135,35 +135,37 @@ class _FlightLogsScreenState extends State<FlightLogsScreen> {
 
                               return Container(
                                 margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                decoration: BoxDecoration(
+                                child: Material(
                                   color: isSelected ? GcsColors.surfaceCard : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: isSelected ? _orangeAccent : Colors.transparent,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: ListTile(
-                                  dense: true,
-                                  leading: Icon(
-                                    Icons.description_outlined,
-                                    color: isSelected ? _orangeAccent : GcsColors.textMuted,
-                                    size: 20,
-                                  ),
-                                  title: Text(
-                                    s.title,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'monospace',
-                                      color: isSelected ? Colors.white : GcsColors.textSecondary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    side: BorderSide(
+                                      color: isSelected ? _orangeAccent : Colors.transparent,
+                                      width: 1,
                                     ),
                                   ),
-                                  subtitle: Text(
-                                    'Duration: $durStr | Max: ${s.maxAltitude.toStringAsFixed(0)}m',
-                                    style: TextStyle(fontSize: 10, color: isSelected ? _orangeAccent : GcsColors.textMuted, fontFamily: 'monospace'),
+                                  child: ListTile(
+                                    dense: true,
+                                    leading: Icon(
+                                      Icons.description_outlined,
+                                      color: isSelected ? _orangeAccent : GcsColors.textMuted,
+                                      size: 20,
+                                    ),
+                                    title: Text(
+                                      s.title,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'monospace',
+                                        color: isSelected ? Colors.white : GcsColors.textSecondary,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      'Duration: $durStr | Max: ${s.maxAltitude.toStringAsFixed(0)}m',
+                                      style: TextStyle(fontSize: 10, color: isSelected ? _orangeAccent : GcsColors.textMuted, fontFamily: 'monospace'),
+                                    ),
+                                    onTap: () => setState(() => _selectedSessionIndex = index),
                                   ),
-                                  onTap: () => setState(() => _selectedSessionIndex = index),
                                 ),
                               );
                             },

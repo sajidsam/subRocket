@@ -117,15 +117,10 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // 1. Live Camera Feed (IP Webcam / MJPEG) or Realistic Mountain Landscape Simulation
-            if (vehicle.isUsingSimulatedCamera)
-              CustomPaint(
-                painter: MountainLandscapePainter(animation: _animController),
-              )
-            else
-              IpWebcamStreamView(
-                streamUrl: vehicle.cameraStreamUrl,
-              ),
+            // 1. Live Camera Feed (IP Webcam / MJPEG / Snapshot Stream)
+            IpWebcamStreamView(
+              streamUrl: vehicle.cameraStreamUrl,
+            ),
 
             // 2. Center Artificial Horizon / Reticle (Navigation stays always visible)
             Center(
@@ -868,105 +863,4 @@ class _HistogramPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// Alpine Mountain View Background Painter
-class MountainLandscapePainter extends CustomPainter {
-  final Animation<double> animation;
 
-  MountainLandscapePainter({required this.animation}) : super(repaint: animation);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-
-    // Sky Gradient with soft daylight glow
-    final skyGradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        const Color(0xFF9AB2C5), // Crisp sky blue
-        const Color(0xFFC7D7E2), // Pale misty horizon
-        const Color(0xFF8294A2), // Soft mountain haze
-      ],
-      stops: const [0.0, 0.45, 1.0],
-    );
-    canvas.drawRect(rect, Paint()..shader = skyGradient.createShader(rect));
-
-    // Far Distant Mountains
-    final farMountainPath = Path();
-    farMountainPath.moveTo(0, size.height * 0.6);
-    farMountainPath.lineTo(size.width * 0.2, size.height * 0.42);
-    farMountainPath.lineTo(size.width * 0.4, size.height * 0.48);
-    farMountainPath.lineTo(size.width * 0.55, size.height * 0.38);
-    farMountainPath.lineTo(size.width * 0.75, size.height * 0.45);
-    farMountainPath.lineTo(size.width, size.height * 0.55);
-    farMountainPath.lineTo(size.width, size.height);
-    farMountainPath.lineTo(0, size.height);
-    farMountainPath.close();
-
-    canvas.drawPath(
-      farMountainPath,
-      Paint()
-        ..color = const Color(0xFF6B7F91).withValues(alpha: 0.7)
-        ..style = PaintingStyle.fill,
-    );
-
-    // Dramatic Sharp Alpine Ridge Peak (Right side & Valley)
-    final ridgePath = Path();
-    ridgePath.moveTo(size.width * 0.35, size.height);
-    ridgePath.lineTo(size.width * 0.45, size.height * 0.55);
-    ridgePath.lineTo(size.width * 0.58, size.height * 0.65);
-    ridgePath.lineTo(size.width * 0.68, size.height * 0.36); // Sharp peak
-    ridgePath.lineTo(size.width * 0.74, size.height * 0.42);
-    ridgePath.lineTo(size.width * 0.82, size.height * 0.28); // Highest peak
-    ridgePath.lineTo(size.width * 0.92, size.height * 0.45);
-    ridgePath.lineTo(size.width, size.height * 0.38);
-    ridgePath.lineTo(size.width, size.height);
-    ridgePath.close();
-
-    final ridgeGradient = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        const Color(0xFF8B7765), // Sunlit rock
-        const Color(0xFF4A423B), // Shadowed crag
-        const Color(0xFF2C2723), // Deep ravine
-      ],
-    );
-    canvas.drawPath(
-      ridgePath,
-      Paint()
-        ..shader = ridgeGradient.createShader(rect)
-        ..style = PaintingStyle.fill,
-    );
-
-    // Left Foreground Crags
-    final leftCrag = Path();
-    leftCrag.moveTo(0, size.height);
-    leftCrag.lineTo(0, size.height * 0.5);
-    leftCrag.lineTo(size.width * 0.18, size.height * 0.62);
-    leftCrag.lineTo(size.width * 0.28, size.height * 0.75);
-    leftCrag.lineTo(size.width * 0.4, size.height);
-    leftCrag.close();
-
-    canvas.drawPath(
-      leftCrag,
-      Paint()
-        ..color = const Color(0xFF38322D)
-        ..style = PaintingStyle.fill,
-    );
-
-    // Subtle lens vignette
-    final vignette = RadialGradient(
-      center: Alignment.center,
-      radius: 1.1,
-      colors: [
-        Colors.transparent,
-        Colors.black.withValues(alpha: 0.4),
-      ],
-    );
-    canvas.drawRect(rect, Paint()..shader = vignette.createShader(rect));
-  }
-
-  @override
-  bool shouldRepaint(covariant MountainLandscapePainter oldDelegate) => false;
-}
