@@ -56,6 +56,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         focusNode: _focusNode,
         autofocus: true,
         onKeyEvent: (FocusNode node, KeyEvent event) {
+          // If focus is inside a text field, dialog, or input widget, do not intercept keys
+          final primaryFocus = FocusManager.instance.primaryFocus;
+          if (primaryFocus != null && primaryFocus != _focusNode) {
+            return KeyEventResult.ignored;
+          }
+
           if (event is KeyDownEvent || event is KeyRepeatEvent) {
             // Space: Immediate Emergency Motor Kill
             if (event.logicalKey == LogicalKeyboardKey.space) {

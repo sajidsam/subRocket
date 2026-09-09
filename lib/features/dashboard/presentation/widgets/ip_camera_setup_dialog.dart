@@ -29,6 +29,7 @@ class _IpCameraSetupDialogState extends State<IpCameraSetupDialog> {
   void _applyQuickPreset(String preset) {
     setState(() {
       _urlController.text = preset;
+      _urlController.selection = TextSelection.fromPosition(TextPosition(offset: preset.length));
     });
   }
 
