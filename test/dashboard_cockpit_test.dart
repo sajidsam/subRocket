@@ -7,7 +7,6 @@ import 'package:rocket_controller/core/services/mavlink_service.dart';
 import 'package:rocket_controller/core/services/parameter_service.dart';
 import 'package:rocket_controller/core/services/speech_service.dart';
 import 'package:rocket_controller/features/dashboard/presentation/screens/dashboard_screen.dart';
-import 'package:rocket_controller/features/dashboard/presentation/widgets/ai_vision_overlay.dart';
 import 'package:rocket_controller/features/dashboard/presentation/widgets/camera_viewfinder_card.dart';
 import 'package:rocket_controller/features/dashboard/presentation/widgets/drone_status_card.dart';
 import 'package:rocket_controller/features/dashboard/presentation/widgets/flight_camera_deck_card.dart';
@@ -73,20 +72,40 @@ void main() {
       expect(find.text('88%'), findsOneWidget);
     });
 
-    testWidgets('CameraViewfinderCard toggles HDR, Pause, and AI Detection states', (WidgetTester tester) async {
+    testWidgets('CameraViewfinderCard toggles HDR, AI Detect, and Pause states', (WidgetTester tester) async {
       await tester.pumpWidget(createTestableWidget(const CameraViewfinderCard()));
       await tester.pump();
 
       expect(find.text('HDR'), findsOneWidget);
-      expect(find.text('AI DETECT'), findsOneWidget);
+      expect(find.text('AI Detect'), findsOneWidget);
       expect(find.text('H2.85'), findsOneWidget);
+      // AI detection overlay initially inactive
+      expect(find.text('AI VISION ACTIVE'), findsNothing);
 
-      // Tap AI DETECT button to activate YOLOv11-Aero object detection
-      await tester.tap(find.text('AI DETECT'));
+      // Tap AI Detect button
+      await tester.tap(find.text('AI Detect'));
       await tester.pump();
 
-      expect(find.text('AI DETECT'), findsOneWidget);
-      expect(find.byType(AiVisionOverlay), findsOneWidget);
+      // Verify AI Detection HUD is active
+      expect(find.text('AI VISION ACTIVE'), findsOneWidget);
+      expect(find.textContaining('YOLOv8-UAV'), findsOneWidget);
+      expect(find.textContaining('TRK-01'), findsOneWidget);
+
+      // Tap on target TRK-01 to lock on
+      await tester.tap(find.textContaining('TRK-01'));
+      await tester.pump();
+      expect(find.text('TARGET LOCKED: TRK-01'), findsOneWidget);
+
+      // Tap AI Detect button again to deactivate
+      await tester.tap(find.text('AI Detect'));
+      await tester.pump();
+      expect(find.text('AI VISION ACTIVE'), findsNothing);
+
+      // Tap HDR button
+      await tester.tap(find.text('HDR'));
+      await tester.pump();
+
+      expect(find.text('HDR'), findsOneWidget);
     });
 
     testWidgets('CameraViewfinderCard retains navigation when isDispActive is false', (WidgetTester tester) async {

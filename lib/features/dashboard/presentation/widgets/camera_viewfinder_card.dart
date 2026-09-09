@@ -4,12 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:provider/provider.dart';
-import '../../../../core/models/ai_detection_model.dart';
 import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
-import '../../../../core/services/ai_detector_service.dart';
-import 'ai_vision_overlay.dart';
-import 'ip_camera_setup_dialog.dart';
+import 'ai_detection_overlay.dart';
 import 'ip_webcam_stream_view.dart';
 import 'tactical_compass_card.dart';
 
@@ -124,16 +121,23 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
 
             // 2. Center Artificial Horizon / Reticle (Navigation stays always visible)
             Center(
-              child: Transform.rotate(
-                angle: vehicle.roll * (pi / 180.0),
-                child: Transform.translate(
-                  offset: Offset(0, (vehicle.pitch * 1.5).clamp(-60.0, 60.0)),
-                  child: const ArtificialHorizonReticle(),
+              child: IgnorePointer(
+                child: Transform.rotate(
+                  angle: vehicle.roll * (pi / 180.0),
+                  child: Transform.translate(
+                    offset: Offset(0, (vehicle.pitch * 1.5).clamp(-60.0, 60.0)),
+                    child: const ArtificialHorizonReticle(),
+                  ),
                 ),
               ),
             ),
 
-            // 3. Bottom-Right: Tactical Compass Navigation Overlay (Always visible on camera feed)
+            // 3. Tactical AI Computer Vision & Object Tracking Overlay
+            AiDetectionOverlay(
+              isAiDetectActive: _isAiDetectActive && widget.isDispActive,
+            ),
+
+            // 4. Bottom-Right: Tactical Compass Navigation Overlay (Always visible on camera feed)
             const Positioned(
               bottom: 12,
               right: 14,
@@ -142,18 +146,13 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
               child: TacticalCompassCard(isOverlay: true),
             ),
 
-            // AI SOTA Object Detection Overlay (YOLOv11-Aero Core)
-            if (_isAiDetectActive)
-              AiVisionOverlay(
-                detections: AiDetectorService.getDetections(_animController.value),
-                animation: _animController,
-              ),
-
             // Non-nav HUD Overlays (Toggled on/off with DISP button)
             if (widget.isDispActive) ...[
               // Rule of Thirds Grid Overlay
-              CustomPaint(
-                painter: ViewfinderGridPainter(),
+              const IgnorePointer(
+                child: CustomPaint(
+                  painter: ViewfinderGridPainter(),
+                ),
               ),
 
               // Top-Left HUD Telemetry Overlay
@@ -163,7 +162,7 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top Buttons Row: HDR + AI DETECT (YOLOv11-Aero SOTA)
+                    // Top Buttons Row: HDR + AI Detect
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -196,12 +195,12 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
                         ),
                         const SizedBox(width: 8),
 
-                        // AI Object Detection Toggle Button (YOLOv11-Aero SOTA)
+                        // AI Detect Button
                         InkWell(
                           borderRadius: BorderRadius.circular(6),
                           onTap: () => setState(() => _isAiDetectActive = !_isAiDetectActive),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: _isAiDetectActive
                                   ? GcsColors.cyanAccent.withValues(alpha: 0.25)
@@ -212,25 +211,14 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
                                 width: 1,
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.auto_awesome,
-                                  size: 11,
-                                  color: _isAiDetectActive ? GcsColors.cyanAccent : GcsColors.textMuted,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'AI DETECT',
-                                  style: TextStyle(
-                                    color: _isAiDetectActive ? GcsColors.cyanAccent : GcsColors.textMuted,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              'AI Detect',
+                              style: TextStyle(
+                                color: _isAiDetectActive ? GcsColors.cyanAccent : GcsColors.textMuted,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
                         ),
@@ -811,6 +799,8 @@ class _ReticlePainter extends CustomPainter {
 
 // Viewfinder Grid Overlay (Rule of Thirds Dotted Lines)
 class ViewfinderGridPainter extends CustomPainter {
+  const ViewfinderGridPainter();
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
