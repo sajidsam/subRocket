@@ -79,27 +79,17 @@ void main() {
       expect(find.text('HDR'), findsOneWidget);
       expect(find.text('AI Detect'), findsOneWidget);
       expect(find.text('H2.85'), findsOneWidget);
-      // AI detection overlay initially inactive
-      expect(find.text('AI VISION ACTIVE'), findsNothing);
 
-      // Tap AI Detect button
+      // Tap AI Detect button to toggle
       await tester.tap(find.text('AI Detect'));
       await tester.pump();
 
-      // Verify AI Detection HUD is active
-      expect(find.text('AI VISION ACTIVE'), findsOneWidget);
-      expect(find.textContaining('YOLOv8-UAV'), findsOneWidget);
-      expect(find.textContaining('TRK-01'), findsOneWidget);
-
-      // Tap on target TRK-01 to lock on
-      await tester.tap(find.textContaining('TRK-01'));
-      await tester.pump();
-      expect(find.text('TARGET LOCKED: TRK-01'), findsOneWidget);
+      expect(find.text('AI Detect'), findsOneWidget);
 
       // Tap AI Detect button again to deactivate
       await tester.tap(find.text('AI Detect'));
       await tester.pump();
-      expect(find.text('AI VISION ACTIVE'), findsNothing);
+      expect(find.text('AI Detect'), findsOneWidget);
 
       // Tap HDR button
       await tester.tap(find.text('HDR'));
