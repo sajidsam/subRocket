@@ -279,13 +279,9 @@ class _IpWebcamStreamViewState extends State<IpWebcamStreamView> {
       }
     });
 
-    // Auto retry after 3 seconds
+    // No auto retry loop - manual reconnect only
     _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        _startStream();
-      }
-    });
+    _reconnectTimer = null;
   }
 
   @override
@@ -307,81 +303,27 @@ class _IpWebcamStreamViewState extends State<IpWebcamStreamView> {
   }
 
   Widget _buildStandbyPlaceholder() {
-    return Container(
-      color: const Color(0xFF090C10),
-      padding: const EdgeInsets.all(8),
-      child: Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_isLoading) ...[
-                const SizedBox(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _startStream,
+      child: Container(
+        color: const Color(0xFF090C10),
+        padding: const EdgeInsets.all(8),
+        child: Center(
+          child: _isLoading
+              ? const SizedBox(
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.0,
-                    valueColor: AlwaysStoppedAnimation<Color>(GcsColors.cyanAccent),
+                    valueColor: AlwaysStoppedAnimation<Color>(GcsColors.warningOrange),
                   ),
+                )
+              : const Icon(
+                  Icons.videocam_off_outlined,
+                  color: GcsColors.warningOrange,
+                  size: 32,
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'CONNECTING TO CAMERA...',
-                  style: TextStyle(
-                    color: GcsColors.cyanAccent,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.streamUrl,
-                  style: const TextStyle(
-                    color: GcsColors.textMuted,
-                    fontFamily: 'monospace',
-                    fontSize: 9.5,
-                  ),
-                ),
-              ] else ...[
-                const Icon(Icons.videocam_off_outlined, color: GcsColors.warningOrange, size: 28),
-                const SizedBox(height: 8),
-                Text(
-                  _errorMessage,
-                  style: const TextStyle(
-                    color: GcsColors.warningOrange,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.streamUrl,
-                  style: const TextStyle(
-                    color: GcsColors.textMuted,
-                    fontFamily: 'monospace',
-                    fontSize: 9.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: GcsColors.cyanAccent,
-                    side: const BorderSide(color: GcsColors.cyanAccent),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
-                  icon: const Icon(Icons.refresh, size: 12),
-                  label: const Text('RETRY LINK', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                  onPressed: _startStream,
-                ),
-              ],
-            ],
-          ),
         ),
       ),
     );
