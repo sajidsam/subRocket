@@ -203,18 +203,27 @@ class _CameraViewfinderCardState extends State<CameraViewfinderCard> with Single
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: _isAiDetectActive
-                                  ? GcsColors.warningOrange.withValues(alpha: 0.25)
+                                  ? const Color(0xFFFA7B35)
                                   : Colors.black.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: _isAiDetectActive ? GcsColors.warningOrange : GcsColors.border,
+                                color: _isAiDetectActive ? const Color(0xFFFA7B35) : GcsColors.border,
                                 width: 1,
                               ),
+                              boxShadow: _isAiDetectActive
+                                  ? [
+                                      BoxShadow(
+                                        color: const Color(0xFFFA7B35).withValues(alpha: 0.35),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ]
+                                  : null,
                             ),
                             child: Text(
                               'AI Detect',
                               style: TextStyle(
-                                color: _isAiDetectActive ? GcsColors.warningOrange : GcsColors.textMuted,
+                                color: _isAiDetectActive ? Colors.black : GcsColors.textMuted,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5,
