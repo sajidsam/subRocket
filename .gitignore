@@ -55,3 +55,4 @@ app.*.map.json
 /release/
 /build/
 /windows/flutter/ephemeral/
+*.pt

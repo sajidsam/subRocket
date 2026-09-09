@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../../../core/models/vehicle_state.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
+import '../../../../core/services/real_ai_detector_service.dart';
 
 class IpWebcamStreamView extends StatefulWidget {
   final String streamUrl;
@@ -129,6 +130,7 @@ class _IpWebcamStreamViewState extends State<IpWebcamStreamView> {
             });
             _trackFps();
             context.read<VehicleState>().setCameraStatus('ONLINE', isConnected: true);
+            RealAiDetectorService.instance.processFrame(res.bodyBytes);
           }
         }
       } catch (e) {
@@ -211,6 +213,7 @@ class _IpWebcamStreamViewState extends State<IpWebcamStreamView> {
                   _hasError = false;
                 });
                 _trackFps();
+                RealAiDetectorService.instance.processFrame(frameBytes);
               }
             }
           }

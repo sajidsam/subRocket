@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../core/presentation/theme/gcs_theme.dart';
+import '../../../../core/services/real_ai_detector_service.dart';
 
 enum AiTargetCategory {
   person('PERSON', Icons.person_outline, GcsColors.cyanAccent),
@@ -93,6 +94,7 @@ class _AiDetectionOverlayState extends State<AiDetectionOverlay>
   @override
   void initState() {
     super.initState();
+    RealAiDetectorService.instance.start();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
@@ -101,6 +103,7 @@ class _AiDetectionOverlayState extends State<AiDetectionOverlay>
 
   @override
   void dispose() {
+    RealAiDetectorService.instance.stop();
     _animController.dispose();
     super.dispose();
   }
@@ -122,194 +125,216 @@ class _AiDetectionOverlayState extends State<AiDetectionOverlay>
       return const SizedBox.shrink();
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height = constraints.maxHeight;
+    return ValueListenableBuilder<bool>(
+      valueListenable: RealAiDetectorService.instance.isServerOnlineNotifier,
+      builder: (context, isServerOnline, _) {
+        return ValueListenableBuilder<List<AiDetectedTarget>>(
+          valueListenable: RealAiDetectorService.instance.detectionsNotifier,
+          builder: (context, realDetections, _) {
+            final rawTargets = isServerOnline
+                ? realDetections
+                : _defaultTargets;
 
-        final activeTargets = _defaultTargets.where((t) {
-          if (_selectedFilter == 'ALL') return true;
-          if (_selectedFilter == 'PERSONS') return t.category == AiTargetCategory.person;
-          if (_selectedFilter == 'VEHICLES') return t.category == AiTargetCategory.vehicle;
-          if (_selectedFilter == 'LZ / PADS') return t.category == AiTargetCategory.landingPad;
-          return true;
-        }).toList();
+            final activeTargets = rawTargets.where((t) {
+              if (_selectedFilter == 'ALL') return true;
+              if (_selectedFilter == 'PERSONS') return t.category == AiTargetCategory.person;
+              if (_selectedFilter == 'VEHICLES') return t.category == AiTargetCategory.vehicle;
+              if (_selectedFilter == 'LZ / PADS') return t.category == AiTargetCategory.landingPad;
+              return true;
+            }).toList();
 
-        return AnimatedBuilder(
-          animation: _animController,
-          builder: (context, child) {
-            final animVal = _animController.value;
-            // Laser scanline vertical position
-            final scanY = (animVal * (height + 40)) - 20;
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final height = constraints.maxHeight;
 
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                // 1. Subtle Laser Scan Beam
-                IgnorePointer(
-                  child: CustomPaint(
-                    painter: _AiScanlinePainter(scanY: scanY, width: width, height: height),
-                  ),
-                ),
+                return AnimatedBuilder(
+                  animation: _animController,
+                  builder: (context, child) {
+                    final animVal = _animController.value;
+                    // Laser scanline vertical position
+                    final scanY = (animVal * (height + 40)) - 20;
 
-                // 2. Detected Object Bounding Boxes
-                ...activeTargets.map((target) {
-                  final isLocked = _lockedTargetId == target.id;
-                  // Dynamic subtle micro-movement simulation
-                  final t = animVal * 2 * pi + target.phaseOffset;
-                  final dx = sin(t) * 4.0;
-                  final dy = cos(t * 0.8) * 3.0;
-
-                  final rect = Rect.fromLTWH(
-                    (target.normalizedRect.left * width + dx).clamp(4.0, width - 60),
-                    (target.normalizedRect.top * height + dy).clamp(4.0, height - 60),
-                    (target.normalizedRect.width * width).clamp(40.0, width),
-                    (target.normalizedRect.height * height).clamp(40.0, height),
-                  );
-
-                  return Positioned(
-                    left: rect.left,
-                    top: (rect.top - 24).clamp(0.0, height - 80),
-                    width: rect.width,
-                    height: rect.height + 44,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => _toggleLockTarget(target.id),
-                      child: _AiBoundingBox(
-                        target: target,
-                        boxHeight: rect.height,
-                        isLocked: isLocked,
-                        pulseValue: sin(animVal * 4 * pi),
-                      ),
-                    ),
-                  );
-                }),
-
-                // 3. Top-Center AI Neural Engine Telemetry Strip
-                Positioned(
-                  top: 14,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.82),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: GcsColors.cyanAccent.withValues(alpha: 0.6),
-                          width: 1,
+                    return Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // 1. Subtle Laser Scan Beam
+                        IgnorePointer(
+                          child: CustomPaint(
+                            painter: _AiScanlinePainter(scanY: scanY, width: width, height: height),
+                          ),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: GcsColors.cyanAccent.withValues(alpha: 0.25),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Pulsing AI Online Indicator
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: GcsColors.cyanAccent,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: GcsColors.cyanAccent.withValues(
-                                    alpha: 0.5 + 0.5 * sin(animVal * 4 * pi).abs(),
-                                  ),
-                                  blurRadius: 6,
-                                  spreadRadius: 2,
+
+                        // 2. Detected Object Bounding Boxes
+                        ...activeTargets.map((target) {
+                          final isLocked = _lockedTargetId == target.id;
+
+                          final rect = Rect.fromLTWH(
+                            (target.normalizedRect.left * width).clamp(4.0, width - 60),
+                            (target.normalizedRect.top * height).clamp(4.0, height - 60),
+                            (target.normalizedRect.width * width).clamp(40.0, width),
+                            (target.normalizedRect.height * height).clamp(40.0, height),
+                          );
+
+                          return Positioned(
+                            left: rect.left,
+                            top: (rect.top - 24).clamp(0.0, height - 80),
+                            width: rect.width,
+                            height: rect.height + 44,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => _toggleLockTarget(target.id),
+                              child: _AiBoundingBox(
+                                target: target,
+                                boxHeight: rect.height,
+                                isLocked: isLocked,
+                                pulseValue: sin(animVal * 4 * pi),
+                              ),
+                            ),
+                          );
+                        }),
+
+                        // 3. Top-Center AI Neural Engine Telemetry Strip
+                        Positioned(
+                          top: 14,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.82),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: GcsColors.cyanAccent.withValues(alpha: 0.6),
+                                  width: 1,
                                 ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 7),
-                          const Text(
-                            'AI VISION ACTIVE',
-                            style: TextStyle(
-                              color: GcsColors.cyanAccent,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.8,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(width: 1, height: 10, color: Colors.white24),
-                          const SizedBox(width: 8),
-                          Text(
-                            'YOLOv8-UAV • 60 FPS • 12ms',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                            decoration: BoxDecoration(
-                              color: _lockedTargetId != null
-                                  ? GcsColors.goldAccent.withValues(alpha: 0.3)
-                                  : GcsColors.cyanAccent.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              _lockedTargetId != null
-                                  ? 'TARGET LOCKED: $_lockedTargetId'
-                                  : '${activeTargets.length} TARGETS',
-                              style: TextStyle(
-                                color: _lockedTargetId != null
-                                    ? GcsColors.goldAccent
-                                    : GcsColors.cyanAccent,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'monospace',
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: GcsColors.cyanAccent.withValues(alpha: 0.25),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Pulsing AI Online Indicator
+                                  Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: BoxDecoration(
+                                      color: isServerOnline ? GcsColors.channelGreen : GcsColors.cyanAccent,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: (isServerOnline ? GcsColors.channelGreen : GcsColors.cyanAccent).withValues(
+                                            alpha: 0.5 + 0.5 * sin(animVal * 4 * pi).abs(),
+                                          ),
+                                          blurRadius: 6,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 7),
+                                  Text(
+                                    isServerOnline ? 'LIVE YOLOv8 ACTIVE' : 'AI VISION ACTIVE',
+                                    style: TextStyle(
+                                      color: isServerOnline ? GcsColors.channelGreen : GcsColors.cyanAccent,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.8,
+                                      fontFamily: 'monospace',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(width: 1, height: 10, color: Colors.white24),
+                                  const SizedBox(width: 8),
+                                  ValueListenableBuilder<double>(
+                                    valueListenable: RealAiDetectorService.instance.inferenceMsNotifier,
+                                    builder: (context, ms, _) {
+                                      return ValueListenableBuilder<double>(
+                                        valueListenable: RealAiDetectorService.instance.fpsNotifier,
+                                        builder: (context, fps, _) {
+                                          final fpsStr = isServerOnline && fps > 0 ? '${fps.toStringAsFixed(0)} FPS' : '60 FPS';
+                                          final msStr = isServerOnline && ms > 0 ? '${ms.toStringAsFixed(0)}ms' : '12ms';
+                                          return Text(
+                                            'YOLOv8-UAV • $fpsStr • $msStr',
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(alpha: 0.85),
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'monospace',
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                    decoration: BoxDecoration(
+                                      color: _lockedTargetId != null
+                                          ? GcsColors.goldAccent.withValues(alpha: 0.3)
+                                          : GcsColors.cyanAccent.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      _lockedTargetId != null
+                                          ? 'TARGET LOCKED: $_lockedTargetId'
+                                          : '${activeTargets.length} TARGETS',
+                                      style: TextStyle(
+                                        color: _lockedTargetId != null
+                                            ? GcsColors.goldAccent
+                                            : GcsColors.cyanAccent,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                        ),
 
-                // 4. Quick Target Filter Bar (Top Center-Left below top bar)
-                Positioned(
-                  top: 48,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.7),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white12, width: 0.8),
+                        // 4. Quick Target Filter Bar (Top Center-Left below top bar)
+                        Positioned(
+                          top: 48,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white12, width: 0.8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _buildFilterChip('ALL'),
+                                    _buildFilterChip('PERSONS'),
+                                    _buildFilterChip('VEHICLES'),
+                                    _buildFilterChip('LZ / PADS'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildFilterChip('ALL'),
-                            _buildFilterChip('PERSONS'),
-                            _buildFilterChip('VEHICLES'),
-                            _buildFilterChip('LZ / PADS'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                      ],
+                    );
+                  },
+                );
+              },
             );
           },
         );
